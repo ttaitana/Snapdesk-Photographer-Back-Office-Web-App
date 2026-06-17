@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Camera } from "lucide-react";
 
 import type { JobFilter, JobStatus } from "@snapdesk/types";
 import { listJobsAction } from "./actions";
-import { listCustomersAction } from "@/app/customers/actions";
+import { useCustomerNames } from "./use-customer-names";
+import { JobsViewTabs } from "./jobs-view-tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -20,13 +21,8 @@ const RANGE_OPTIONS: { value: JobFilter["range"]; label: string }[] = [
   { value: "this_week", label: "สัปดาห์นี้" },
 ];
 
-/**
- * Client list view for /jobs (task #7). `listJobs` (packages/core) doesn't
- * join the Customer relation — see jobs.test.ts's `where` assertions, which
- * we don't want to disturb — so instead of touching that well-tested query,
- * this fetches customers separately via listCustomersAction and joins by
- * customerId client-side. Fine at this scale (one team's customer list).
- */
+/** Client list view for /jobs (task #7). See use-customer-names.ts for why
+ * customer names are joined client-side instead of in the listJobs query. */
 export function JobsList() {
   const [range, setRange] = useState<JobFilter["range"]>("all");
   const [status, setStatus] = useState<JobStatus | "all">("all");
@@ -36,18 +32,7 @@ export function JobsList() {
     queryFn: () => listJobsAction({ range, ...(status !== "all" && { status }) }),
   });
 
-  const customersQuery = useQuery({
-    queryKey: ["customers"],
-    queryFn: () => listCustomersAction(),
-  });
-
-  const customerNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const customer of customersQuery.data ?? []) {
-      map.set(customer.id, customer.name);
-    }
-    return map;
-  }, [customersQuery.data]);
+  const { customerNameById } = useCustomerNames();
 
   const isFiltered = range !== "all" || status !== "all";
 
@@ -55,9 +40,12 @@ export function JobsList() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-heading text-2xl uppercase text-ink">คิวถ่าย</h2>
-        <Button asChild variant="primary" size="sm">
-          <Link href="/jobs/new">+ สร้างคิวถ่าย</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <JobsViewTabs active="list" />
+          <Button asChild variant="primary" size="sm">
+            <Link href="/jobs/new">+ สร้างคิวถ่าย</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
