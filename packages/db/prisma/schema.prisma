@@ -2,8 +2,8 @@
 //
 // Models are added progressively per TASKS.md:
 //   P1 — Better Auth core tables (User, Session, Account, Verification) +
-//        organization-plugin tables renamed to Team, TeamMember, TeamInvite
-//   P2 — Customer, Job (+ JobStatus), Payment (+ PaymentType)
+//        organization-plugin tables renamed to Team, TeamMember, TeamInvite  [done]
+//   P2 — Customer, Job (+ JobStatus), Payment (+ PaymentType)                [done]
 //   P4 — Package, JobAssignment (+ ShareType)
 //   P6 — Expense, TaxSetting, MemberTaxProfile
 //   P7 — DeliveryQr
@@ -92,6 +92,9 @@ model User {
   memberships   TeamMember[]
   sentInvites   TeamInvite[]  @relation("TeamInviteInviter")
 
+  /// P2 — jobs this user created (audit trail). See Job.createdById below.
+  createdJobs   Job[]         @relation("JobCreatedBy")
+
   @@map("user")
 }
 
@@ -174,6 +177,13 @@ model Team {
   members     TeamMember[]
   invitations TeamInvite[]
 
+  /// P2 — business data, always scoped by teamId. See SPEC.md §3 (security):
+  /// every query against these must go through @snapdesk/core services that
+  /// filter by the caller's resolved team-context, never trust a client-
+  /// supplied teamId directly.
+  customers Customer[]
+  jobs      Job[]
+
   @@map("team")
 }
 
@@ -212,4 +222,122 @@ model TeamInvite {
   createdAt DateTime @default(now())
 
   @@map("team_invite")
+}
+
+// ── P2 — Core Data Layer ──
+//
+// Customer / Job / Payment, mirrored from SPEC.md §4. Money fields use
+// Decimal (not Float) to avoid floating-point drift on currency; the
+// @snapdesk/core service layer converts Decimal <-> plain `number` at the
+// boundary so the rest of the app can keep using the `number`-based zod
+// schemas in @snapdesk/types (customer.ts/job.ts/payment.ts) unchanged.
+//
+// `Job.packageId` is a plain nullable String with NO Prisma relation yet —
+// the `Package` model doesn't exist until P4, so there's nothing to point
+// to. Add the relation when P4 introduces Package.
+
+model Customer {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  name      String
+  phone     String?
+  email     String?
+  lineId    String?
+  channel   String?
+  note      String?
+
+  jobs      Job[]
+
+  createdAt DateTime @default(now())
+
+  @@index([teamId])
+  @@map("customer")
+}
+
+enum JobStatus {
+  INQUIRY
+  QUOTED
+  CONFIRMED
+  SHOOTING
+  EDITING
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+model Job {
+  id           String    @id @default(cuid())
+  teamId       String
+  team         Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  /// Audit: who created this job. See User.createdJobs above.
+  createdById  String
+  createdBy    User      @relation("JobCreatedBy", fields: [createdById], references: [id])
+
+  customerId   String
+  customer     Customer  @relation(fields: [customerId], references: [id])
+
+  title        String
+  shootType    String?
+  status       JobStatus @default(INQUIRY)
+
+  shootDate    DateTime?
+  shootTime    String?
+
+  locationName String?
+  locationLat  Float?
+  locationLng  Float?
+  locationUrl  String?
+
+  description  String?
+  /// [{ id, item, done }] — see ChecklistItem in @snapdesk/types/job.ts.
+  /// P3 (คิวถ่าย UI) is where this actually gets edited; P2 just needs the
+  /// column and the service-layer read/write.
+  checklist    Json?
+
+  totalPrice   Decimal   @default(0)
+
+  /// No relation — Package model doesn't exist until P4. See note above.
+  packageId    String?
+
+  deliveryLink String?
+
+  payments     Payment[]
+
+  createdAt    DateTime  @default(now())
+
+  @@index([teamId])
+  @@index([customerId])
+  @@map("job")
+}
+
+enum PaymentType {
+  DEPOSIT
+  BALANCE
+  FULL
+}
+
+model Payment {
+  id          String      @id @default(cuid())
+  jobId       String
+  job         Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  amount      Decimal
+  /// Withholding-tax rate (%) and the resulting amount withheld. Computed by
+  /// the payments service from paymentInputSchema's `whtRate` — these are
+  /// NOT accepted directly from client input. See SPEC.md §5 Feature 7.
+  whtRate     Decimal     @default(0)
+  whtAmount   Decimal     @default(0)
+  /// amount - whtAmount, also computed server-side.
+  netReceived Decimal?
+
+  type        PaymentType
+  paidAt      DateTime    @default(now())
+  method      String?
+  note        String?
+
+  @@index([jobId])
+  @@map("payment")
 }

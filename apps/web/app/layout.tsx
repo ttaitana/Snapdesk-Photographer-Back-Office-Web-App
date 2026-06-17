@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anton, IBM_Plex_Sans_Thai } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/components/query-provider";
 import "@/lib/env"; // validates process.env on startup — throws early if misconfigured
 import "./globals.css";
 
@@ -31,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="th" suppressHydrationWarning className={`${heading.variable} ${body.variable}`}>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="snapdesk-theme">
-          {children}
+          <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
       </body>
     </html>

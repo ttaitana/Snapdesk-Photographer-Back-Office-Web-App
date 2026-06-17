@@ -26,13 +26,22 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
+  // Standard next-themes hydration-mismatch guard: the server can't know the
+  // persisted theme, so it always renders "system" first and flips to the
+  // real value after mount. That one-time flip is exactly what this effect
+  // is for, even though react-hooks/set-state-in-effect's cascading-render
+  // warning generally applies to effects synchronizing with external state.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
   const current: Mode = mounted ? ((theme as Mode) ?? "system") : "system";
   const Icon = ICONS[current];
 
   function cycle() {
-    const next = MODES[(MODES.indexOf(current) + 1) % MODES.length];
+    // The modulo keeps the index within [0, MODES.length), so this is always
+    // a hit — but noUncheckedIndexedAccess still types it as `Mode |
+    // undefined`, hence the assertion.
+    const next = MODES[(MODES.indexOf(current) + 1) % MODES.length]!;
     setTheme(next);
   }
 

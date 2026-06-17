@@ -10,7 +10,24 @@ import { organizationClient } from "better-auth/client/plugins";
  * changing this default.
  */
 export const authClient = createAuthClient({
-  plugins: [organizationClient()],
+  // `schema.organization.additionalFields` must mirror the server-side
+  // organization({ schema: { organization: { additionalFields: ... } } })
+  // config in packages/auth/src/auth.ts — the client plugin only infers
+  // businessName/taxId into organizationApi.update()'s `data` type (and
+  // ActiveOrganization/$Infer types) when told about them here too; better
+  // Auth does not introspect the server config at the type level.
+  plugins: [
+    organizationClient({
+      schema: {
+        organization: {
+          additionalFields: {
+            businessName: { type: "string", required: false, input: true },
+            taxId: { type: "string", required: false, input: true },
+          },
+        },
+      },
+    }),
+  ],
 });
 
 export const {

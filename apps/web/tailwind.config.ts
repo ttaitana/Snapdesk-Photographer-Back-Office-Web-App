@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 // Color tokens map straight to the CSS variables defined in app/globals.css
 // (light values in :root, dark overrides in .dark) — see SPEC.md §3.2.
@@ -69,7 +70,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 };
 
 export default config;

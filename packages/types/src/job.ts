@@ -57,6 +57,16 @@ export const updateJobStatusInputSchema = z.object({
 });
 export type UpdateJobStatusInput = z.infer<typeof updateJobStatusInputSchema>;
 
+// General field edits (title/date/location/checklist/etc). Status changes go
+// through updateJobStatusInputSchema above instead — kept separate so the
+// "move this job to the next status" action (P3 timeline) can't accidentally
+// also overwrite unrelated fields.
+export const updateJobInputSchema = jobInputSchema.partial().extend({
+  id: cuidSchema,
+  teamId: cuidSchema,
+});
+export type UpdateJobInput = z.infer<typeof updateJobInputSchema>;
+
 export const jobFilterSchema = z.object({
   teamId: cuidSchema,
   status: jobStatusSchema.optional(),

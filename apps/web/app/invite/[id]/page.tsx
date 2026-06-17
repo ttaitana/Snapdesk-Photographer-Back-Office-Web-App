@@ -38,7 +38,7 @@ export default async function InvitePage({ params }: { params: Promise<{ id: str
     organizationId: string;
     organizationName?: string;
     expiresAt: string | Date;
-  } | null = null;
+  } | null;
 
   try {
     invitation = await auth.api.getInvitation({ query: { id }, headers: requestHeaders });
@@ -61,6 +61,11 @@ export default async function InvitePage({ params }: { params: Promise<{ id: str
   }
 
   const expiresAt = new Date(invitation.expiresAt);
+  // This is an async Server Component — it runs once per request, not on a
+  // re-render loop, so reading the wall clock here doesn't cause the
+  // inconsistent-output problem react-hooks/purity guards against on the
+  // client. We need real "now" to decide whether the invite has expired.
+  // eslint-disable-next-line react-hooks/purity
   const expired = invitation.status === "pending" && expiresAt.getTime() < Date.now();
   const emailMismatch = session.user.email.toLowerCase() !== invitation.email.toLowerCase();
 
