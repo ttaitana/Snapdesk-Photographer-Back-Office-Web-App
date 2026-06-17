@@ -1,12 +1,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 
 import { auth } from "@/lib/auth";
 import { resolveTeamContext } from "@snapdesk/core";
-import { LogoutButton } from "@/components/logout-button";
-import { TeamNav } from "./team-nav";
-import { TeamSwitcher } from "./team-switcher";
+import { AppShell } from "@/components/app-shell";
 
 /**
  * Shared shell for every /team/* page (settings, members, switcher — tasks
@@ -32,24 +29,5 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
     redirect("/dashboard?error=no-team");
   }
 
-  return (
-    <main className="relative min-h-screen bg-bg p-6 md:p-10">
-      <div className="halftone pointer-events-none fixed inset-0" aria-hidden="true" />
-      <div className="relative mx-auto max-w-3xl space-y-6">
-        <header className="flex items-center justify-between">
-          <Link href="/dashboard" className="font-heading text-3xl uppercase text-ink md:text-4xl">
-            Snapdesk
-          </Link>
-          <div className="flex items-center gap-3">
-            <TeamSwitcher />
-            <LogoutButton />
-          </div>
-        </header>
-
-        <TeamNav />
-
-        {children}
-      </div>
-    </main>
-  );
+  return <AppShell>{children}</AppShell>;
 }

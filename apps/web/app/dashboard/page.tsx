@@ -53,10 +53,15 @@ export default async function DashboardPage({
             <CardDescription>{session.user.email}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>ฟีเจอร์จริง (คิวถ่าย, ใบเสนอราคา, การเงิน ฯลฯ) ยังอยู่ในขั้นพัฒนา — ดู TASKS.md</p>
-            <Link href="/team/settings" className="font-medium text-primary underline-offset-4 hover:underline">
-              ตั้งค่าทีม →
-            </Link>
+            <p>ฟีเจอร์จริง (ใบเสนอราคา, การเงิน ฯลฯ) ยังอยู่ในขั้นพัฒนา — ดู TASKS.md</p>
+            <div className="flex flex-col gap-1">
+              <Link href="/jobs" className="font-medium text-primary underline-offset-4 hover:underline">
+                คิวถ่าย →
+              </Link>
+              <Link href="/team/settings" className="font-medium text-primary underline-offset-4 hover:underline">
+                ตั้งค่าทีม →
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
