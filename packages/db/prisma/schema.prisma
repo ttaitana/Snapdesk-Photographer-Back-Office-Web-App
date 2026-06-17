@@ -82,9 +82,9 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  /** App-level preference, not part of Better Auth's default user schema —
-   * added via `user.additionalFields.theme` in packages/auth. Mirrors
-   * `ThemeMode` in @snapdesk/types. */
+  /// App-level preference, not part of Better Auth's default user schema —
+  /// added via `user.additionalFields.theme` in packages/auth. Mirrors
+  /// `ThemeMode` in @snapdesk/types.
   theme String @default("system")
 
   sessions      Session[]
@@ -107,9 +107,9 @@ model Session {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /** The team this session is currently "switched to" — written by Better
-   * Auth's organization plugin (`setActiveOrganization`), read by the
-   * team-context resolver in @snapdesk/core. See naming note #3 above. */
+  /// The team this session is currently "switched to" — written by Better
+  /// Auth's organization plugin (`setActiveOrganization`), read by the
+  /// team-context resolver in @snapdesk/core. See naming note #3 above.
   activeOrganizationId String?
 
   @@map("session")
@@ -129,12 +129,12 @@ model Account {
   refreshTokenExpiresAt  DateTime?
   scope                  String?
 
-  /** Only set for the credentials (email+password) provider — Better Auth
-   * hashes it (scrypt by default) before it ever reaches this column, so
-   * this is never plaintext. Satisfies SPEC.md §5's "never store plaintext
-   * password" requirement even though the spec named bcrypt/argon2
-   * specifically; scrypt is an equally-acceptable OWASP-recommended KDF and
-   * is what Better Auth ships by default. */
+  /// Only set for the credentials (email+password) provider — Better Auth
+  /// hashes it (scrypt by default) before it ever reaches this column, so
+  /// this is never plaintext. Satisfies SPEC.md §5's "never store plaintext
+  /// password" requirement even though the spec named bcrypt/argon2
+  /// specifically; scrypt is an equally-acceptable OWASP-recommended KDF and
+  /// is what Better Auth ships by default.
   password String?
 
   createdAt DateTime @default(now())
@@ -166,8 +166,8 @@ model Team {
   metadata  String?
   createdAt DateTime @default(now())
 
-  /** Added via `organization.additionalFields` — not part of Better Auth's
-   * default organization schema. Matches SPEC.md §4's Team model. */
+  /// Added via `organization.additionalFields` — not part of Better Auth's
+  /// default organization schema. Matches SPEC.md §4's Team model.
   businessName String?
   taxId        String?
 
@@ -184,8 +184,8 @@ model TeamMember {
   userId         String
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /** Lowercase to match Better Auth's built-in access-control defaults —
-   * see naming note #2 above. One of: "owner" | "admin" | "member". */
+  /// Lowercase to match Better Auth's built-in access-control defaults —
+  /// see naming note #2 above. One of: "owner" | "admin" | "member".
   role String @default("member")
 
   createdAt DateTime @default(now())
@@ -201,8 +201,8 @@ model TeamInvite {
   email          String
   role           String    @default("member")
 
-  /** One of: "pending" | "accepted" | "rejected" | "canceled" (Better Auth
-   * defaults). */
+  /// One of: "pending" | "accepted" | "rejected" | "canceled" (Better Auth
+  /// defaults).
   status String @default("pending")
 
   expiresAt DateTime

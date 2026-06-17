@@ -15,6 +15,7 @@
     "migrate:deploy": "prisma migrate deploy",
     "studio": "prisma studio",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .turbo"
   },
