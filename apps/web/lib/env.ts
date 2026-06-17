@@ -18,7 +18,19 @@ const envSchema = z.object({
     .min(1, "DATABASE_URL is required — copy .env.example to .env and set it"),
 
   REDIS_URL: z.string().optional(),
-  AUTH_SECRET: z.string().optional(),
+
+  // Required from P1 onward — Better Auth signs sessions/cookies with this.
+  AUTH_SECRET: z
+    .string()
+    .min(1, "AUTH_SECRET is required — generate one with `openssl rand -base64 32`"),
+
+  // Required from P1 onward — team invites are sent via Resend (the user
+  // chose real email delivery over a link-only fallback). The app still
+  // boots without it set (so `pnpm install && pnpm build` works before
+  // anyone has a Resend account), but invite-sending will throw at runtime
+  // if missing — see packages/auth/src/email/invite-email.ts.
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("Snapdesk <onboarding@resend.dev>"),
 
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -55,4 +67,8 @@ export const integrations = {
   microsoft: Boolean(env.MS_CLIENT_ID && env.MS_CLIENT_SECRET),
   redis: Boolean(env.REDIS_URL),
   storage: Boolean(env.STORAGE_BUCKET && env.STORAGE_KEY && env.STORAGE_SECRET),
+  // Team invites can still be *created* without this (status stays "pending"
+  // and the link works if someone has it), but no email goes out — surface
+  // this in the invite UI so the team isn't left wondering why nothing arrived.
+  email: Boolean(env.RESEND_API_KEY),
 } as const;

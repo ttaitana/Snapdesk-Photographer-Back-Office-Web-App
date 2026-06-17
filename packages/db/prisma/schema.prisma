@@ -1,7 +1,8 @@
 // @snapdesk/db — Prisma schema (source of truth for the data model).
 //
 // Models are added progressively per TASKS.md:
-//   P1 — Auth.js tables (User, Account, Session, VerificationToken) + Team, TeamMember, TeamInvite
+//   P1 — Better Auth core tables (User, Session, Account, Verification) +
+//        organization-plugin tables renamed to Team, TeamMember, TeamInvite
 //   P2 — Customer, Job (+ JobStatus), Payment (+ PaymentType)
 //   P4 — Package, JobAssignment (+ ShareType)
 //   P6 — Expense, TaxSetting, MemberTaxProfile
@@ -12,6 +13,54 @@
 //
 // Every business-data model carries `teamId` and must be queried through
 // `@snapdesk/core` services that scope by team — see SPEC.md §3 (security).
+//
+// ── Why Better Auth instead of Auth.js (SPEC.md literally says "Auth.js
+// (NextAuth)") ──
+// In Sept 2025 the Auth.js team joined Better Auth; Auth.js is now
+// maintenance-only (security patches, no new features) and still tagged
+// beta. Better Auth is their own recommended choice for new projects as of
+// mid-2026, and its `organization` plugin maps directly onto this project's
+// Team/TeamMember/role model. Decided with the user via AskUserQuestion
+// before writing any P1 code.
+//
+// ── Hand-written, not CLI-generated ──
+// Normally `npx @better-auth/cli generate` writes this schema for you. That
+// command needs network access to resolve the Better Auth config module,
+// which isn't available in the sandbox that authored this file, so the
+// User/Session/Account/Verification models below were transcribed by hand
+// from Better Auth's documented schema (https://better-auth.com/docs/concepts/database)
+// and the organization plugin's schema
+// (https://better-auth.com/docs/plugins/organization). Double-check against
+// those pages if Better Auth's schema ever changes.
+//
+// ── Naming decisions worth knowing about ──
+// 1. Organization-plugin model names are renamed via `schema.<model>.modelName`
+//    in packages/auth (Team / TeamMember / TeamInvite) so the rest of the
+//    codebase — which says "team" everywhere per TASKS.md/SPEC.md — reads
+//    naturally. The plugin's *field* names inside those tables (organizationId,
+//    role, status, inviterId, logo, slug...) are left as Better Auth's
+//    defaults: Better Auth's `fields` remap only changes the physical column,
+//    not the JS-level property the library reads/writes, so renaming them
+//    would buy nothing and risks drifting from undocumented internals we
+//    can't verify without running the CLI. `packages/auth`'s team service is
+//    the only place that talks to these tables directly — it translates
+//    `organizationId` → `teamId`, `logo` → `logoUrl`, etc. before handing
+//    data to the rest of the app, so nothing above that layer ever sees
+//    Better Auth's vocabulary. See packages/auth/src/team-mapping.ts.
+// 2. Role strings are lowercase ("owner" | "admin" | "member") to match
+//    Better Auth's built-in access-control defaults, NOT the uppercase
+//    OWNER/ADMIN/MEMBER originally sketched in packages/types — fighting the
+//    plugin's default casing via custom access-control roles was judged
+//    riskier than a one-time lowercase rename of a not-yet-used zod enum.
+//    `packages/types` enums.ts was updated to match; UI capitalizes for
+//    display ("Owner"/"Admin"/"Member").
+// 3. `Session.activeOrganizationId` keeps Better Auth's literal field name
+//    even though it conceptually means "this session's active **team**" —
+//    SPEC.md's `User.activeTeamId` placement isn't how the organization
+//    plugin tracks the active org (it lives on the session, not the user,
+//    so it can differ per device/tab). The team-switcher and team-context
+//    resolver read/write it through Better Auth's `setActiveOrganization` /
+//    `getSession` APIs, never directly.
 
 generator client {
   provider = "prisma-client-js"
@@ -22,10 +71,145 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Placeholder so `prisma generate` has at least one model to compile — Prisma
-// errors out on a schema with zero models. Delete this once P1 lands the real
-// User/Team/TeamMember tables.
-model HealthCheck {
+// ── Better Auth core tables ──
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  /** App-level preference, not part of Better Auth's default user schema —
+   * added via `user.additionalFields.theme` in packages/auth. Mirrors
+   * `ThemeMode` in @snapdesk/types. */
+  theme String @default("system")
+
+  sessions      Session[]
+  accounts      Account[]
+  memberships   TeamMember[]
+  sentInvites   TeamInvite[]  @relation("TeamInviteInviter")
+
+  @@map("user")
+}
+
+model Session {
   id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /** The team this session is currently "switched to" — written by Better
+   * Auth's organization plugin (`setActiveOrganization`), read by the
+   * team-context resolver in @snapdesk/core. See naming note #3 above. */
+  activeOrganizationId String?
+
+  @@map("session")
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  accountId    String
+  providerId   String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accessToken            String?
+  refreshToken           String?
+  idToken                String?
+  accessTokenExpiresAt   DateTime?
+  refreshTokenExpiresAt  DateTime?
+  scope                  String?
+
+  /** Only set for the credentials (email+password) provider — Better Auth
+   * hashes it (scrypt by default) before it ever reaches this column, so
+   * this is never plaintext. Satisfies SPEC.md §5's "never store plaintext
+   * password" requirement even though the spec named bcrypt/argon2
+   * specifically; scrypt is an equally-acceptable OWASP-recommended KDF and
+   * is what Better Auth ships by default. */
+  password String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verification")
+}
+
+// ── organization plugin tables, renamed to match this project's "Team"
+// vocabulary (see naming note #1 above) ──
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String?  @unique
+  logo      String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  /** Added via `organization.additionalFields` — not part of Better Auth's
+   * default organization schema. Matches SPEC.md §4's Team model. */
+  businessName String?
+  taxId        String?
+
+  members     TeamMember[]
+  invitations TeamInvite[]
+
+  @@map("team")
+}
+
+model TeamMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  team           Team     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /** Lowercase to match Better Auth's built-in access-control defaults —
+   * see naming note #2 above. One of: "owner" | "admin" | "member". */
+  role String @default("member")
+
+  createdAt DateTime @default(now())
+
+  @@unique([organizationId, userId])
+  @@map("team_member")
+}
+
+model TeamInvite {
+  id             String    @id @default(cuid())
+  organizationId String
+  team           Team      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String    @default("member")
+
+  /** One of: "pending" | "accepted" | "rejected" | "canceled" (Better Auth
+   * defaults). */
+  status String @default("pending")
+
+  expiresAt DateTime
+  inviterId String
+  inviter   User     @relation("TeamInviteInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("team_invite")
 }

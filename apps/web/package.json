@@ -24,7 +24,9 @@
     "@radix-ui/react-dialog": "^1.1.16",
     "@radix-ui/react-label": "^2.1.2",
     "@snapdesk/core": "workspace:*",
-    "@snapdesk/types": "workspace:*"
+    "@snapdesk/types": "workspace:*",
+    "@snapdesk/auth": "workspace:*",
+    "better-auth": "^1.6.11"
   },
   "devDependencies": {
     "@types/node": "^20.16.10",

@@ -52,6 +52,12 @@ const dependencyBoundary = {
             message:
               "packages/db must never import from apps/* — apps/web should go through @snapdesk/core, not query Prisma directly.",
           },
+          {
+            target: "./packages/auth",
+            from: "./apps",
+            message:
+              "packages/auth must never import from apps/* — it takes secrets/config as plain arguments from createAuth(); see packages/auth/README.md.",
+          },
         ],
       },
     ],

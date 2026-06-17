@@ -23,7 +23,9 @@
       "@snapdesk/types": ["packages/types/src/index.ts"],
       "@snapdesk/types/*": ["packages/types/src/*"],
       "@snapdesk/db": ["packages/db/src/index.ts"],
-      "@snapdesk/db/*": ["packages/db/src/*"]
+      "@snapdesk/db/*": ["packages/db/src/*"],
+      "@snapdesk/auth": ["packages/auth/src/index.ts"],
+      "@snapdesk/auth/*": ["packages/auth/src/*"]
     }
   }
 }

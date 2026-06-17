@@ -7,7 +7,12 @@ import { z } from "zod";
  * directly would be too heavy.
  */
 
-export const teamRoleSchema = z.enum(["OWNER", "ADMIN", "MEMBER"]);
+/**
+ * Lowercase to match Better Auth's organization-plugin access-control
+ * defaults (P1) — not a Prisma enum, since Better Auth's `role` column is a
+ * plain string. UI should capitalize for display ("Owner"/"Admin"/"Member").
+ */
+export const teamRoleSchema = z.enum(["owner", "admin", "member"]);
 export type TeamRole = z.infer<typeof teamRoleSchema>;
 
 export const jobStatusSchema = z.enum([

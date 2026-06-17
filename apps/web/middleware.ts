@@ -1,0 +1,48 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
+
+/**
+ * Optimistic auth gate — checks for the presence of a session cookie only
+ * (no DB round trip), per Better Auth's own recommended middleware pattern:
+ * https://better-auth.com — Next.js middleware runs on the Edge runtime,
+ * which can't load Prisma, so this can't call auth.api.getSession() the way
+ * app/dashboard/page.tsx does. A forged/expired-but-present cookie would
+ * pass this check; pages still must verify the real session themselves
+ * (see DashboardPage) — this middleware only prevents the common case of
+ * an obviously-logged-out visitor reaching a protected URL.
+ *
+ * Add new public routes to PUBLIC_PATHS as they're built. /invite/[id]
+ * (task #23) is deliberately NOT here — accepting/viewing an invitation
+ * requires a logged-in session per Better Auth's organization plugin docs,
+ * so an unauthenticated visitor is correctly bounced to /login first; the
+ * ?redirect= param this sets sends them straight back afterwards.
+ */
+const PUBLIC_PATHS = ["/login", "/register", "/logout", "/api/auth"];
+
+function isPublicPath(pathname: string): boolean {
+  if (pathname === "/") return true;
+  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  const sessionCookie = getSessionCookie(request);
+  if (!sessionCookie) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  // Skip static assets and Next internals; everything else goes through the
+  // gate above (including app/page.tsx, but isPublicPath("/") covers that).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};

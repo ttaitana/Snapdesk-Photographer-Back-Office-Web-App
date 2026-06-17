@@ -34,10 +34,23 @@ export const teamMemberSchema = z.object({
 });
 export type TeamMember = z.infer<typeof teamMemberSchema>;
 
+export const teamInviteStatusSchema = z.enum(["pending", "accepted", "rejected", "canceled"]);
+export type TeamInviteStatus = z.infer<typeof teamInviteStatusSchema>;
+
+export const teamInviteSchema = z.object({
+  id: cuidSchema,
+  teamId: cuidSchema,
+  email: z.string().email(),
+  role: teamRoleSchema,
+  status: teamInviteStatusSchema,
+  expiresAt: z.coerce.date(),
+});
+export type TeamInvite = z.infer<typeof teamInviteSchema>;
+
 export const inviteMemberInputSchema = z.object({
   teamId: cuidSchema,
   email: z.string().email("อีเมลไม่ถูกต้อง"),
-  role: teamRoleSchema.default("MEMBER"),
+  role: teamRoleSchema.default("member"),
 });
 export type InviteMemberInput = z.infer<typeof inviteMemberInputSchema>;
 
