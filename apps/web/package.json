@@ -1,0 +1,41 @@
+{
+  "name": "@snapdesk/web",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next .turbo"
+  },
+  "dependencies": {
+    "next": "^16.2.9",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "next-themes": "^0.4.6",
+    "zod": "^3.23.8",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.3",
+    "class-variance-authority": "^0.7.0",
+    "lucide-react": "^0.451.0",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-dialog": "^1.1.16",
+    "@radix-ui/react-label": "^2.1.2",
+    "@snapdesk/core": "workspace:*",
+    "@snapdesk/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.10",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.3",
+    "tailwindcss": "^3.4.13",
+    "tailwindcss-animate": "^1.0.7",
+    "postcss": "^8.4.47",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^10.5.0",
+    "eslint-config-next": "^16.2.9"
+  }
+}

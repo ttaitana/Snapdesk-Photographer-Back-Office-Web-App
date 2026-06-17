@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # Dummy values so `prisma generate`/typecheck/build succeed without a real DB.
+  # Real secrets are injected at deploy time, not in CI.
+  DATABASE_URL: postgresql://ci:ci@localhost:5432/snapdesk_ci
+  NODE_ENV: test
+
+jobs:
+  lint-typecheck-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Lint
+        run: pnpm turbo run lint
+
+      - name: Typecheck
+        run: pnpm turbo run typecheck
+
+      - name: Build
+        run: pnpm turbo run build

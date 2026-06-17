@@ -1,0 +1,31 @@
+// @snapdesk/db — Prisma schema (source of truth for the data model).
+//
+// Models are added progressively per TASKS.md:
+//   P1 — Auth.js tables (User, Account, Session, VerificationToken) + Team, TeamMember, TeamInvite
+//   P2 — Customer, Job (+ JobStatus), Payment (+ PaymentType)
+//   P4 — Package, JobAssignment (+ ShareType)
+//   P6 — Expense, TaxSetting, MemberTaxProfile
+//   P7 — DeliveryQr
+//
+// Full target shape lives in SPEC.md §4 — copy models over verbatim when
+// their phase starts so we don't drift from the spec.
+//
+// Every business-data model carries `teamId` and must be queried through
+// `@snapdesk/core` services that scope by team — see SPEC.md §3 (security).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Placeholder so `prisma generate` has at least one model to compile — Prisma
+// errors out on a schema with zero models. Delete this once P1 lands the real
+// User/Team/TeamMember tables.
+model HealthCheck {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+}

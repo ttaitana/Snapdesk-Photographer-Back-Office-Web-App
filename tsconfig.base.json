@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": false,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@snapdesk/core": ["packages/core/src/index.ts"],
+      "@snapdesk/core/*": ["packages/core/src/*"],
+      "@snapdesk/types": ["packages/types/src/index.ts"],
+      "@snapdesk/types/*": ["packages/types/src/*"],
+      "@snapdesk/db": ["packages/db/src/index.ts"],
+      "@snapdesk/db/*": ["packages/db/src/*"]
+    }
+  }
+}

@@ -1,0 +1,39 @@
+import type { Metadata } from "next";
+import { Anton, IBM_Plex_Sans_Thai } from "next/font/google";
+
+import { ThemeProvider } from "@/components/theme-provider";
+import "@/lib/env"; // validates process.env on startup — throws early if misconfigured
+import "./globals.css";
+
+// Heading: thick condensed/industrial feel — SPEC.md §3.3.
+const heading = Anton({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-heading",
+  display: "swap",
+});
+
+// Body: full Thai script support — SPEC.md §3.3.
+const body = IBM_Plex_Sans_Thai({
+  subsets: ["thai", "latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "Snapdesk",
+  description: "ผู้ช่วยจัดการงานหลังบ้านสำหรับช่างภาพ — คิวงาน ใบเสนอราคา การเงิน และภาษี",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="th" suppressHydrationWarning className={`${heading.variable} ${body.variable}`}>
+      <body className="font-sans antialiased">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="snapdesk-theme">
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}

@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Color tokens — SPEC.md §3.2.
+ * Kept as plain hex (not HSL channels) since the spec hands us hex values
+ * directly; the trade-off is bg-primary/50-style alpha modifiers won't work
+ * on these — acceptable for now, revisit if a component needs translucency.
+ */
+:root {
+  /* Spec tokens — light mode */
+  --bg: #dce9f5;
+  --surface: #ffffff;
+  --ink: #16202b;
+  --primary: #2e7dc4;
+  --accent: #ffd21e;
+  --danger: #e23b3b;
+  --success: #2fa46a;
+  --muted: #7a8794;
+
+  /* shadcn/ui semantic aliases -> spec tokens */
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary-foreground: #ffffff;
+  --accent-foreground: var(--ink);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ink);
+  --muted-foreground: var(--muted);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --border: #c7d6e6;
+  --input: #c7d6e6;
+  --ring: var(--primary);
+
+  /* rounded corners, "กลางๆ" per SPEC.md §3.4 (8–12px) */
+  --radius: 0.625rem;
+}
+
+.dark {
+  /* Spec tokens — dark mode (danger/success/muted unchanged, see SPEC.md §3.2) */
+  --bg: #0e1620;
+  --surface: #182430;
+  --ink: #e8eef4;
+  --primary: #4fa3e3;
+  --accent: #ffd21e;
+
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary-foreground: #0e1620;
+  --accent-foreground: var(--ink);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ink);
+  --muted-foreground: var(--muted);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --border: #25344a;
+  --input: #25344a;
+  --ring: var(--primary);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer utilities {
+  /* Subtle halftone texture — SPEC.md §3.4. Keep opacity low, used sparingly. */
+  .halftone {
+    background-image: radial-gradient(var(--ink) 1px, transparent 1px);
+    background-size: 10px 10px;
+    opacity: 0.05;
+  }
+
+  /* Comic-panel card look: thick border + hard offset shadow */
+  .panel {
+    @apply rounded-lg border-2 border-ink bg-card shadow-hard;
+  }
+}
