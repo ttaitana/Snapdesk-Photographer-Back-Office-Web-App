@@ -8,11 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { TeamSettingsForm } from "./team-settings-form";
 
 /**
- * Edit name / business name / tax ID / logo for the active team. Only
- * owner/admin can actually submit changes (requireRole equivalent below) —
- * a plain member sees the same form but disabled, since SPEC.md's tax/income
- * summary features (P2+) depend on businessName/taxId being accurate and we
- * don't want every member able to change what the books say.
+ * Edit name / business name / tax ID / logo / revenue recognition basis for
+ * the active team. Only owner/admin can actually submit changes (requireRole
+ * equivalent below) — a plain member sees the same form but disabled, since
+ * SPEC.md's tax/income summary features (P2+) depend on businessName/taxId
+ * being accurate and we don't want every member able to change what the
+ * books say. revenueBasis ("cash" | "accrual", P6 F7) drives finance-summary
+ * and tax calculations in @snapdesk/core — see Team.revenueBasis.
  */
 export default async function TeamSettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -47,7 +49,7 @@ export default async function TeamSettingsPage() {
         <CardTitle>ตั้งค่าทีม</CardTitle>
         <CardDescription>
           {canEdit
-            ? "แก้ไขชื่อทีม ชื่อธุรกิจ เลขประจำตัวผู้เสียภาษี และโลโก้"
+            ? "แก้ไขชื่อทีม ชื่อธุรกิจ เลขประจำตัวผู้เสียภาษี โลโก้ และเกณฑ์การรับรู้รายได้"
             : "เฉพาะเจ้าของหรือผู้ดูแลทีมเท่านั้นที่แก้ไขได้ — คุณดูได้อย่างเดียว"}
         </CardDescription>
       </CardHeader>

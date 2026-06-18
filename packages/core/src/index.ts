@@ -72,4 +72,24 @@ export {
   type ListExpensesFilter,
 } from "./expenses";
 
-export { getFinanceSummary } from "./finance-summary";
+export {
+  getFinanceSummary,
+  getFinanceExportData,
+  type IncomeExportRow,
+  type ExpenseExportRow,
+  type FinanceExportData,
+} from "./finance-summary";
+
+export {
+  getTaxSetting,
+  upsertTaxSetting,
+  getTeamVatStatus,
+  getMemberTaxProfile,
+  listMemberTaxProfiles,
+  upsertMemberTaxProfile,
+  getMemberYearEndTaxEstimate,
+  getTaxExportSummary,
+  type TeamVatStatus,
+  type TaxExportMemberRow,
+  type TaxExportSummary,
+} from "./tax";

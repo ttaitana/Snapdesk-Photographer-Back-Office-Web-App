@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { SummaryPeriod, SummaryView } from "@snapdesk/types";
-import { getFinanceSummaryAction, getMyTeamRoleAction } from "./actions";
+import { getFinanceSummaryAction, getMyTeamRoleAction, getFinanceExportDataAction } from "./actions";
+import { downloadFinanceExportCsv } from "./finance-export-csv";
 import { listTeamMembersAction } from "@/app/jobs/job-assignments-actions";
 import { CategoryBreakdownChart } from "./category-breakdown-chart";
 import { MemberBreakdownTable } from "./member-breakdown-table";
@@ -53,6 +54,7 @@ export function FinanceSummaryView() {
   const [referenceDate, setReferenceDate] = useState<Date>(() => new Date());
   const [view, setView] = useState<SummaryView>("team");
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
+  const [csvState, setCsvState] = useState<"idle" | "loading" | "error">("idle");
 
   const roleQuery = useQuery({
     queryKey: ["my-team-role"],
@@ -91,6 +93,21 @@ export function FinanceSummaryView() {
   function handleViewChange(next: SummaryView) {
     setView(next);
     if (next === "team") setSelectedMemberId("");
+  }
+
+  async function handleExportCsv() {
+    setCsvState("loading");
+    try {
+      const data = await getFinanceExportDataAction({
+        year: referenceDate.getFullYear(),
+        view,
+        memberId: view === "member" && selectedMemberId ? selectedMemberId : undefined,
+      });
+      downloadFinanceExportCsv(data);
+      setCsvState("idle");
+    } catch {
+      setCsvState("error");
+    }
   }
 
   const summary = summaryQuery.data;
@@ -178,8 +195,16 @@ export function FinanceSummaryView() {
                 ))}
               </select>
             )}
+
+            <Button type="button" variant="outline" onClick={handleExportCsv} disabled={csvState === "loading"}>
+              {csvState === "loading" ? "กำลังสร้างไฟล์..." : `ส่งออก CSV (ปี ${referenceDate.getFullYear()})`}
+            </Button>
           </div>
         </div>
+
+        {csvState === "error" && (
+          <p className="text-sm text-destructive">ส่งออก CSV ไม่สำเร็จ ลองใหม่อีกครั้ง</p>
+        )}
       </div>
 
       {summaryQuery.isLoading ? (

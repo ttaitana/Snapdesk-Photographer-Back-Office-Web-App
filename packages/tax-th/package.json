@@ -1,5 +1,5 @@
 {
-  "name": "@snapdesk/core",
+  "name": "@snapdesk/tax-th",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -15,11 +15,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rm -rf .turbo"
-  },
-  "dependencies": {
-    "@snapdesk/types": "workspace:*",
-    "@snapdesk/db": "workspace:*",
-    "@snapdesk/tax-th": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

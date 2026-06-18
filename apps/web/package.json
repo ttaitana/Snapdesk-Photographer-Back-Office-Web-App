@@ -30,7 +30,8 @@
     "@snapdesk/types": "workspace:*",
     "@snapdesk/auth": "workspace:*",
     "better-auth": "^1.6.11",
-    "@react-pdf/renderer": "^4.4.0"
+    "@react-pdf/renderer": "^4.4.0",
+    "exceljs": "^4.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.16.10",

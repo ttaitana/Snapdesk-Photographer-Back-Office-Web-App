@@ -104,21 +104,21 @@
 - [x] Prisma model `Expense` (+ createdById) + CRUD + แนบรูปใบเสร็จ (ลิงก์ URL — ไม่มี file upload infra ในโปรเจกต์นี้ เหมือน `Team.logoUrl`)
 - [x] สรุปตามช่วงเวลา (เดือน/ไตรมาส/ปี): รายรับ/รายจ่าย/กำไรสุทธิ + กราฟตามหมวด
 - [x] 2 มุมมองสลับได้: ทีม (team total) / รายคน (per member)
-- [ ] revenue recognition config: cash basis (default) / accrual — service supports both bases (`Team.revenueBasis`), but no settings UI yet to switch it
+- [x] revenue recognition config: cash basis (default) / accrual — settings UI in team/settings (toggle, owner/admin only)
 - [x] สิทธิ์การเห็น: MEMBER เห็นของตัวเอง+ยอดทีม, OWNER/ADMIN เห็นทุกคน
 
 **ภาษี (`packages/tax-th` — pure functions + unit test)**
-- [ ] Prisma models: `TaxSetting` (VAT ทีม) + `MemberTaxProfile` (PIT รายคน)
-- [ ] VAT ระดับทีม: on/off + อัตรา + แยกราคาก่อน/หลัง VAT + เตือนใกล้ 1.8 ล้าน
-- [ ] WHT: ตั้งต่อรายการรับเงิน (3%/2%/0%) + คำนวณยอดสุทธิ + แบ่งเครดิตตามส่วนแบ่ง
-- [ ] PIT รายคน: 40(2)/40(8), หักเหมา/ตามจริง, ค่าลดหย่อน, ขั้นบันได 0–35%
-- [ ] ประมาณการภาษีปลายปีรายคน = ภาษี − WHT ที่เครดิต
-- [ ] หน้า settings ภาษี (ทีม + รายคน) + แก้ bracket ได้
-- [ ] disclaimer ในแอป (ตัวเลขประมาณการ)
+- [x] Prisma models: `TaxSetting` (VAT ทีม) + `MemberTaxProfile` (PIT รายคน)
+- [x] VAT ระดับทีม: on/off + อัตรา + แยกราคาก่อน/หลัง VAT + เตือนใกล้ 1.8 ล้าน
+- [x] WHT: ตั้งต่อรายการรับเงิน (3%/2%/0%) + คำนวณยอดสุทธิ + แบ่งเครดิตตามส่วนแบ่ง
+- [x] PIT รายคน: 40(2)/40(8), หักเหมา/ตามจริง, ค่าลดหย่อน, ขั้นบันได 0–35%
+- [x] ประมาณการภาษีปลายปีรายคน = ภาษี − WHT ที่เครดิต
+- [x] หน้า settings ภาษี (ทีม + รายคน) + แก้ bracket ได้
+- [x] disclaimer ในแอป (ตัวเลขประมาณการ)
 
 **Export**
-- [ ] export สรุปภาษี (PDF/Excel) เลือกระดับทีม/รายคน
-- [ ] export raw CSV (ทุก field + คอลัมน์ส่วนแบ่ง) + ใส่ BOM (`﻿`)
+- [x] export สรุปภาษี (PDF/Excel) เลือกระดับทีม/รายคน
+- [x] export raw CSV (ทุก field + คอลัมน์ส่วนแบ่ง) + ใส่ BOM (`﻿`)
 
 ## P7 — QR Delivery (F6)
 

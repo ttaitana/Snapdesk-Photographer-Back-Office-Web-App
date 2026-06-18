@@ -5,8 +5,8 @@
 //        organization-plugin tables renamed to Team, TeamMember, TeamInvite  [done]
 //   P2 — Customer, Job (+ JobStatus), Payment (+ PaymentType)                [done]
 //   P4 — Package, JobAssignment (+ ShareType)                                [done]
-//   P6 — Expense (+ Team.revenueBasis)                                  [in progress]
-//        TaxSetting, MemberTaxProfile — deferred to P6's tax sub-phase
+//   P6 — Expense (+ Team.revenueBasis)                                       [done]
+//        TaxSetting, MemberTaxProfile (ภาษี sub-phase)                 [in progress]
 //   P7 — DeliveryQr
 //
 // Full target shape lives in SPEC.md §4 — copy models over verbatim when
@@ -102,6 +102,9 @@ model User {
   /// P6 — expenses this user recorded (audit trail, same convention as
   /// Job.createdById). See Expense.createdById below.
   recordedExpenses Expense[] @relation("ExpenseCreatedBy")
+
+  /// P6 — this user's own PIT settings (per team). See MemberTaxProfile below.
+  taxProfiles MemberTaxProfile[]
 
   @@map("user")
 }
@@ -206,6 +209,16 @@ model Team {
   /// user's "Expense + Summary first" priority call, and this setting isn't
   /// tax-specific so it doesn't need to wait for that model to exist.
   revenueBasis String @default("cash")
+
+  /// P6 — ภาษี: team-level VAT settings (on/off, rate, editable PIT bracket
+  /// table). One-to-one — a team either has its TaxSetting row or hasn't
+  /// configured tax yet (service layer treats a missing row as "VAT off,
+  /// default brackets"). See TaxSetting below.
+  taxSetting TaxSetting?
+
+  /// P6 — ภาษี: per-member PIT profile (income type, deduction method,
+  /// allowances, default WHT rate). See MemberTaxProfile below.
+  memberTaxProfiles MemberTaxProfile[]
 
   @@map("team")
 }
@@ -492,4 +505,70 @@ model Expense {
   @@index([teamId])
   @@index([jobId])
   @@map("expense")
+}
+
+// ── P6 tax sub-phase — ภาษี (F7) ──
+//
+// Plain app models (teamId/userId field names, like Expense/Customer/Job
+// above) — NOT Better Auth tables, so naming note #1's organizationId
+// rename doesn't apply here. All money/percent fields use Decimal +
+// decimalToNumber() per packages/core/src/lib/decimal.ts convention.
+//
+// Pure calculation (VAT split, WHT credit split, PIT bracket math) lives in
+// packages/tax-th and never touches these models directly; packages/core's
+// tax service reads/writes them and feeds resolved numbers into tax-th.
+//
+// IMPORTANT: every tax figure these models feed into the UI is an ESTIMATE
+// for planning only — see the in-app disclaimer required by TASKS.md/SPEC.md
+// (rendered in apps/web/app/team/tax/page.tsx).
+
+model TaxSetting {
+  id     String @id @default(cuid())
+  teamId String @unique
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  vatRegistered Boolean @default(false)
+  vatRate       Decimal @default(7)
+
+  /// Editable PIT bracket table shared by every member of this team unless
+  /// packages/tax-th's built-in default is used instead (null) —
+  /// [{ min: number, max: number | null, rate: number }], rate as a whole
+  /// percent (e.g. 5, not 0.05). "TASKS.md: แก้ bracket ได้".
+  pitBrackets Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tax_setting")
+}
+
+model MemberTaxProfile {
+  id     String @id @default(cuid())
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// เงินได้ประเภท 40(2) (รับจ้างทำงาน/ค่านายหน้า) หรือ 40(8) (เงินได้อื่นๆ เช่น
+  /// ช่างภาพอิสระขายงาน) — "แต่ละคนเลือกประเภทเงินได้เองได้" (SPEC.md F7).
+  incomeType String @default("40_2")
+
+  /// หักค่าใช้จ่ายแบบเหมา (flat %, capped) หรือตามจริง (actual, documented).
+  expenseMethod String @default("flat")
+
+  /// ค่าลดหย่อนที่เลือกใช้ — [{ label: string, amount: number }]. Free-form
+  /// JSON since the allowance list/amounts change by year's RD announcement
+  /// (see disclaimer) rather than a fixed enum.
+  deductions Json?
+
+  /// Suggested WHT rate (%) when recording this member's payments — 3, 2,
+  /// or 0. Payment.whtRate stays independently settable per payment
+  /// (packages/core/src/payments); this is only a default.
+  defaultWhtRate Decimal @default(3)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, userId])
+  @@map("member_tax_profile")
 }

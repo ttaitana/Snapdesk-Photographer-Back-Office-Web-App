@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
-import type { Team } from "@snapdesk/types";
+import type { RevenueBasis, Team } from "@snapdesk/types";
 import { organizationApi } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ export function TeamSettingsForm({ team, canEdit }: { team: Team; canEdit: boole
   const [businessName, setBusinessName] = useState(team.businessName ?? "");
   const [taxId, setTaxId] = useState(team.taxId ?? "");
   const [logoUrl, setLogoUrl] = useState(team.logoUrl ?? "");
+  const [revenueBasis, setRevenueBasis] = useState<RevenueBasis>(team.revenueBasis);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -40,6 +41,7 @@ export function TeamSettingsForm({ team, canEdit }: { team: Team; canEdit: boole
         businessName: businessName.trim() || undefined,
         taxId: taxId.trim() || undefined,
         logo: logoUrl.trim() || undefined,
+        revenueBasis,
       },
       organizationId: team.id,
     });
@@ -97,6 +99,33 @@ export function TeamSettingsForm({ team, canEdit }: { team: Team; canEdit: boole
           onChange={(e) => setLogoUrl(e.target.value)}
           disabled={!canEdit}
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>เกณฑ์การรับรู้รายได้</Label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant={revenueBasis === "cash" ? "primary" : "outline"}
+            disabled={!canEdit}
+            onClick={() => canEdit && setRevenueBasis("cash")}
+          >
+            เกณฑ์เงินสด (Cash)
+          </Button>
+          <Button
+            type="button"
+            variant={revenueBasis === "accrual" ? "primary" : "outline"}
+            disabled={!canEdit}
+            onClick={() => canEdit && setRevenueBasis("accrual")}
+          >
+            เกณฑ์คงค้าง (Accrual)
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {revenueBasis === "cash"
+            ? "นับรายได้เมื่อได้รับเงินจริง (วันที่ชำระเงิน)"
+            : "นับรายได้เมื่องานได้รับการยืนยัน/ส่งมอบ ไม่ต้องรอรับเงิน"}
+        </p>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

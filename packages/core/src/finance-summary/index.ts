@@ -285,3 +285,188 @@ async function getMemberFinanceSummary(
     })),
   });
 }
+
+// ── Raw export (TASKS.md "Export": "export raw CSV (ทุก field + คอลัมน์ส่วนแบ่ง)") ──
+
+/** One Payment row, every field, plus a human-readable "ส่วนแบ่ง" (revenue
+ * split) string — same proration ratios getCashBasisIncome resolves per
+ * payment, just rendered for a person to read in a spreadsheet rather than
+ * summed into a total. */
+export interface IncomeExportRow {
+  paymentId: string;
+  jobId: string;
+  jobTitle: string;
+  customerName: string;
+  paidAt: Date;
+  type: string;
+  method: string | null;
+  amount: number;
+  whtRate: number;
+  whtAmount: number;
+  netReceived: number | null;
+  note: string | null;
+  split: string;
+}
+
+/** One Expense row, every field. */
+export interface ExpenseExportRow {
+  expenseId: string;
+  jobId: string | null;
+  jobTitle: string | null;
+  category: string;
+  amount: number;
+  spentAt: Date;
+  note: string | null;
+  receiptUrl: string | null;
+  createdByName: string;
+}
+
+export interface FinanceExportData {
+  year: number;
+  view: "team" | "member";
+  memberId: string | null;
+  income: IncomeExportRow[];
+  expenses: ExpenseExportRow[];
+}
+
+function formatSplit(
+  jobTotal: number,
+  assignments: ReturnType<typeof toAssignmentInputs>,
+  names: Map<string, string>,
+  onlyUserId?: string
+): string {
+  if (jobTotal <= 0 || assignments.length === 0) return "";
+  const split = calculateRevenueSplit(jobTotal, assignments);
+  const rows = onlyUserId ? split.assignments.filter((a) => a.userId === onlyUserId) : split.assignments;
+  return rows
+    .map((a) => {
+      const pct = round2((a.amount / jobTotal) * 100);
+      const name = names.get(a.userId) ?? a.userId;
+      return `${name} ${pct}% (${round2(a.amount)})`;
+    })
+    .join("; ");
+}
+
+/** Raw ledger for the calendar year — every Payment + Expense field, plus
+ * the revenue-split column the CSV/Excel export needs (TASKS.md task #25).
+ * view="team": every payment/expense for the team — owner/admin only, this
+ * is the raw ledger (more sensitive than the aggregate totals
+ * getTeamFinanceSummary exposes to everyone).
+ * view="member": payments for jobs this member is assigned to (split column
+ * narrowed to just their share) + expenses they personally recorded — self
+ * or owner/admin. */
+export async function getFinanceExportData(
+  context: TeamContext,
+  options: { year?: number; view: "team" | "member"; memberId?: string }
+): Promise<FinanceExportData> {
+  const targetYear = options.year ?? new Date().getFullYear();
+  const range = { gte: new Date(targetYear, 0, 1), lt: new Date(targetYear + 1, 0, 1) };
+
+  if (options.view === "team" && context.role !== "owner" && context.role !== "admin") {
+    throw new TeamContextError("คุณไม่มีสิทธิ์ดูข้อมูลดิบของทีม");
+  }
+  const targetMemberId = options.view === "member" ? options.memberId ?? context.userId : undefined;
+  if (targetMemberId) {
+    const isSelf = targetMemberId === context.userId;
+    const isManager = context.role === "owner" || context.role === "admin";
+    if (!isSelf && !isManager) {
+      throw new TeamContextError("คุณไม่มีสิทธิ์ดูข้อมูลดิบของสมาชิกคนนี้");
+    }
+  }
+
+  const members = await prisma.teamMember.findMany({
+    where: { organizationId: context.teamId },
+    select: { userId: true, user: { select: { name: true } } },
+  });
+  const names = new Map(members.map((m) => [m.userId, m.user.name]));
+
+  const paymentWhere = targetMemberId
+    ? { paidAt: range, job: { teamId: context.teamId, assignments: { some: { userId: targetMemberId } } } }
+    : { paidAt: range, job: { teamId: context.teamId } };
+
+  const payments = await prisma.payment.findMany({
+    where: paymentWhere,
+    select: {
+      id: true,
+      jobId: true,
+      amount: true,
+      whtRate: true,
+      whtAmount: true,
+      netReceived: true,
+      type: true,
+      paidAt: true,
+      method: true,
+      note: true,
+      job: {
+        select: {
+          title: true,
+          totalPrice: true,
+          customer: { select: { name: true } },
+          assignments: { select: { userId: true, shareType: true, shareValue: true } },
+        },
+      },
+    },
+    orderBy: { paidAt: "asc" },
+  });
+
+  const income: IncomeExportRow[] = payments.map((p) => ({
+    paymentId: p.id,
+    jobId: p.jobId,
+    jobTitle: p.job.title,
+    customerName: p.job.customer?.name ?? "",
+    paidAt: p.paidAt,
+    type: p.type,
+    method: p.method,
+    amount: decimalToNumber(p.amount),
+    whtRate: decimalToNumber(p.whtRate),
+    whtAmount: decimalToNumber(p.whtAmount),
+    netReceived: p.netReceived !== null ? decimalToNumber(p.netReceived) : null,
+    note: p.note,
+    split: formatSplit(
+      decimalToNumber(p.job.totalPrice),
+      toAssignmentInputs(p.job.assignments),
+      names,
+      targetMemberId
+    ),
+  }));
+
+  const expenseWhere = targetMemberId
+    ? { teamId: context.teamId, createdById: targetMemberId, spentAt: range }
+    : { teamId: context.teamId, spentAt: range };
+
+  const expenseRows = await prisma.expense.findMany({
+    where: expenseWhere,
+    select: {
+      id: true,
+      jobId: true,
+      category: true,
+      amount: true,
+      spentAt: true,
+      note: true,
+      receiptUrl: true,
+      createdById: true,
+      job: { select: { title: true } },
+    },
+    orderBy: { spentAt: "asc" },
+  });
+
+  const expenses: ExpenseExportRow[] = expenseRows.map((e) => ({
+    expenseId: e.id,
+    jobId: e.jobId,
+    jobTitle: e.job?.title ?? null,
+    category: e.category,
+    amount: decimalToNumber(e.amount),
+    spentAt: e.spentAt,
+    note: e.note,
+    receiptUrl: e.receiptUrl,
+    createdByName: names.get(e.createdById) ?? "",
+  }));
+
+  return {
+    year: targetYear,
+    view: options.view,
+    memberId: targetMemberId ?? null,
+    income,
+    expenses,
+  };
+}

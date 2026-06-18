@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, Camera, Users, Wallet, Package, Settings, UserCog } from "lucide-react";
+import { LayoutDashboard, Camera, Users, Wallet, Package, Settings, UserCog, Receipt } from "lucide-react";
 
 export interface NavLink {
   href: string;
@@ -16,12 +16,13 @@ export interface NavLink {
 // Typed as a fixed-length tuple (not NavLink[]) so indexed access below
 // stays `NavLink`, not `NavLink | undefined` — tsconfig has
 // noUncheckedIndexedAccess on, which would otherwise flag NAV_LINKS[0].
-export const NAV_LINKS: [NavLink, NavLink, NavLink, NavLink, NavLink, NavLink, NavLink] = [
+export const NAV_LINKS: [NavLink, NavLink, NavLink, NavLink, NavLink, NavLink, NavLink, NavLink] = [
   { href: "/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
   { href: "/jobs", label: "คิวถ่าย", icon: Camera },
   { href: "/customers", label: "ลูกค้า", icon: Users },
   { href: "/finance", label: "การเงิน", icon: Wallet },
   { href: "/packages", label: "แพ็กเกจ", icon: Package },
+  { href: "/team/tax", label: "ภาษี", icon: Receipt },
   { href: "/team/settings", label: "ตั้งค่าทีม", icon: Settings },
   { href: "/team/members", label: "สมาชิก", icon: UserCog },
 ];

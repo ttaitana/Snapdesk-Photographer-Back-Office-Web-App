@@ -5,7 +5,11 @@
 // to @snapdesk/core; no business logic here. Same pattern as
 // app/finance/expenses/actions.ts.
 
-import { getFinanceSummary as getFinanceSummaryService } from "@snapdesk/core";
+import {
+  getFinanceSummary as getFinanceSummaryService,
+  getFinanceExportData as getFinanceExportDataService,
+  type FinanceExportData,
+} from "@snapdesk/core";
 import type { FinanceSummary, SummaryPeriod, SummaryView, TeamRole } from "@snapdesk/types";
 
 import { requireActionContext } from "@/lib/require-action-context";
@@ -42,4 +46,18 @@ export async function getFinanceSummaryAction(
 export async function getMyTeamRoleAction(): Promise<TeamRole> {
   const context = await requireActionContext();
   return context.role;
+}
+
+/** Backs the "export raw CSV" button (TASKS.md task #25) — returns every
+ * Payment/Expense field for the year plus the ส่วนแบ่ง (split) column; the
+ * client builds the actual CSV text (with the UTF-8 BOM prefix) and
+ * triggers the download, same division of labor as the PDF/Excel tax
+ * export (server assembles data, client renders the file). */
+export async function getFinanceExportDataAction(options: {
+  year?: number;
+  view: "team" | "member";
+  memberId?: string;
+}): Promise<FinanceExportData> {
+  const context = await requireActionContext();
+  return getFinanceExportDataService(context, options);
 }
