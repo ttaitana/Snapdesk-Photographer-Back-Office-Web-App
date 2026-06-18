@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/dashboard", label: "แดชบอร์ด" },
   { href: "/jobs", label: "คิวถ่าย" },
+  { href: "/customers", label: "ลูกค้า" },
   { href: "/team/settings", label: "ตั้งค่าทีม" },
   { href: "/team/members", label: "สมาชิก" },
 ];
