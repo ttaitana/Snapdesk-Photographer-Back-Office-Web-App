@@ -26,6 +26,11 @@ export const jobSchema = z.object({
   description: z.string().nullable().optional(),
   checklist: z.array(checklistItemSchema).nullable().optional(),
   totalPrice: z.number().nonnegative(),
+  /// P4 — ใบเสนอราคา (F2) fields. discount/quotedDeposit are absolute Baht
+  /// amounts, matching totalPrice's own unit (not a %).
+  discount: z.number().nonnegative().nullable().optional(),
+  quotedDeposit: z.number().nonnegative().nullable().optional(),
+  quoteExpiresAt: z.coerce.date().nullable().optional(),
   packageId: cuidSchema.nullable().optional(),
   deliveryLink: z.string().nullable().optional(),
   createdAt: z.coerce.date(),
@@ -46,6 +51,9 @@ export const jobInputSchema = z.object({
   description: z.string().optional(),
   checklist: z.array(checklistItemSchema).optional(),
   totalPrice: z.number().nonnegative().default(0),
+  discount: z.number().nonnegative().optional(),
+  quotedDeposit: z.number().nonnegative().optional(),
+  quoteExpiresAt: z.coerce.date().optional(),
   packageId: cuidSchema.optional(),
 });
 export type JobInput = z.infer<typeof jobInputSchema>;
@@ -66,6 +74,17 @@ export const updateJobInputSchema = jobInputSchema.partial().extend({
   teamId: cuidSchema,
 });
 export type UpdateJobInput = z.infer<typeof updateJobInputSchema>;
+
+// P4 — "ส่งใบเสนอราคา" action: marks a job QUOTED. Separate from
+// updateJobStatusInputSchema's generic status-set for the same reason as
+// that schema itself — keeps the quotation-send semantics (and future
+// side-effects, e.g. logging a sent-at timestamp) distinct from an arbitrary
+// timeline status change.
+export const sendQuotationInputSchema = z.object({
+  teamId: cuidSchema,
+  jobId: cuidSchema,
+});
+export type SendQuotationInput = z.infer<typeof sendQuotationInputSchema>;
 
 export const jobFilterSchema = z.object({
   teamId: cuidSchema,

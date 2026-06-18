@@ -11,15 +11,17 @@ import {
   jobInputSchema,
   updateJobInputSchema,
   updateJobStatusInputSchema,
+  sendQuotationInputSchema,
   jobFilterSchema,
   type Job,
   type JobInput,
   type UpdateJobInput,
   type UpdateJobStatusInput,
+  type SendQuotationInput,
   type JobFilter,
 } from "@snapdesk/types";
 import type { TeamContext } from "../team-context";
-import { decimalToNumber } from "../lib/decimal";
+import { decimalToNumber, nullableDecimalToNumber } from "../lib/decimal";
 
 function toJob(row: {
   id: string;
@@ -38,6 +40,9 @@ function toJob(row: {
   description: string | null;
   checklist: unknown;
   totalPrice: { toNumber(): number };
+  discount: { toNumber(): number } | null;
+  quotedDeposit: { toNumber(): number } | null;
+  quoteExpiresAt: Date | null;
   packageId: string | null;
   deliveryLink: string | null;
   createdAt: Date;
@@ -46,6 +51,8 @@ function toJob(row: {
     ...row,
     checklist: row.checklist ?? null,
     totalPrice: decimalToNumber(row.totalPrice),
+    discount: nullableDecimalToNumber(row.discount),
+    quotedDeposit: nullableDecimalToNumber(row.quotedDeposit),
   });
 }
 
@@ -120,6 +127,9 @@ export async function createJob(context: TeamContext, input: JobInput): Promise<
       description: parsed.description || null,
       checklist: (parsed.checklist ?? undefined) as Prisma.InputJsonValue | undefined,
       totalPrice: parsed.totalPrice,
+      discount: parsed.discount ?? 0,
+      quotedDeposit: parsed.quotedDeposit ?? null,
+      quoteExpiresAt: parsed.quoteExpiresAt ?? null,
       packageId: parsed.packageId || null,
     },
   });
@@ -152,6 +162,9 @@ export async function updateJob(
         checklist: parsed.checklist as Prisma.InputJsonValue,
       }),
       ...(parsed.totalPrice !== undefined && { totalPrice: parsed.totalPrice }),
+      ...(parsed.discount !== undefined && { discount: parsed.discount }),
+      ...(parsed.quotedDeposit !== undefined && { quotedDeposit: parsed.quotedDeposit }),
+      ...(parsed.quoteExpiresAt !== undefined && { quoteExpiresAt: parsed.quoteExpiresAt }),
       ...(parsed.packageId !== undefined && { packageId: parsed.packageId || null }),
     },
   });
@@ -169,6 +182,27 @@ export async function updateJobStatus(
   const result = await prisma.job.updateMany({
     where: { id: parsed.jobId, teamId: context.teamId },
     data: { status: parsed.status },
+  });
+
+  if (result.count === 0) return null;
+  return getJob(context, parsed.jobId);
+}
+
+/**
+ * P4 — "ส่งใบเสนอราคา" (F2): marks a job QUOTED. Kept separate from
+ * updateJobStatus so the quotation-send action reads as its own domain
+ * concept rather than an arbitrary status transition (and so future
+ * side-effects specific to sending, e.g. a sentAt timestamp, have a home).
+ */
+export async function sendQuotation(
+  context: TeamContext,
+  input: SendQuotationInput
+): Promise<Job | null> {
+  const parsed = sendQuotationInputSchema.parse({ ...input, teamId: context.teamId });
+
+  const result = await prisma.job.updateMany({
+    where: { id: parsed.jobId, teamId: context.teamId },
+    data: { status: "QUOTED" },
   });
 
   if (result.count === 0) return null;

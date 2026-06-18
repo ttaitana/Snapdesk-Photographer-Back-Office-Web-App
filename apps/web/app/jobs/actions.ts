@@ -10,6 +10,7 @@ import {
   createJob as createJobService,
   updateJob as updateJobService,
   updateJobStatus as updateJobStatusService,
+  sendQuotation as sendQuotationService,
   deleteJob as deleteJobService,
 } from "@snapdesk/core";
 import type {
@@ -18,6 +19,7 @@ import type {
   JobInput,
   UpdateJobInput,
   UpdateJobStatusInput,
+  SendQuotationInput,
 } from "@snapdesk/types";
 
 import { requireActionContext } from "@/lib/require-action-context";
@@ -47,6 +49,12 @@ export async function updateJobStatusAction(
 ): Promise<Job | null> {
   const context = await requireActionContext();
   return updateJobStatusService(context, input);
+}
+
+/** P4 F2 — "ส่งใบเสนอราคา" button on the quotation builder: marks QUOTED. */
+export async function sendQuotationAction(input: SendQuotationInput): Promise<Job | null> {
+  const context = await requireActionContext();
+  return sendQuotationService(context, input);
 }
 
 export async function deleteJobAction(id: string): Promise<boolean> {

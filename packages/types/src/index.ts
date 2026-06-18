@@ -4,3 +4,5 @@ export * from "./team";
 export * from "./customer";
 export * from "./job";
 export * from "./payment";
+export * from "./package";
+export * from "./job-assignment";

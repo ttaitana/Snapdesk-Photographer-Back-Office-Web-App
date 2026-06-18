@@ -8,6 +8,10 @@ import { ArrowLeft, MapPin, Search } from "lucide-react";
 import type { ChecklistItem } from "@snapdesk/types";
 import { getJobAction, updateJobAction } from "../actions";
 import { useCustomerNames } from "../use-customer-names";
+import { QuotationSection } from "./quotation-section";
+import { StatusTimeline } from "./status-timeline";
+import { FinancialSection } from "./financial-section";
+import { RevenueSplitSection } from "./revenue-split-section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -169,6 +173,14 @@ export function JobDetail({ id }: { id: string }) {
           </div>
         </div>
       </div>
+
+      <StatusTimeline job={job} />
+
+      <QuotationSection job={job} customerName={customerNameById.get(job.customerId) ?? "ไม่พบชื่อลูกค้า"} />
+
+      <FinancialSection job={job} />
+
+      <RevenueSplitSection job={job} />
 
       <div className="panel space-y-3 p-5">
         <h3 className="font-heading text-lg uppercase text-ink">checklist อุปกรณ์</h3>

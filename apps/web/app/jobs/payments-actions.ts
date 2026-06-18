@@ -11,8 +11,15 @@ import {
   getPayment as getPaymentService,
   createPayment as createPaymentService,
   deletePayment as deletePaymentService,
+  getJobFinancialSummary as getJobFinancialSummaryService,
+  getTeamOutstandingSummary as getTeamOutstandingSummaryService,
 } from "@snapdesk/core";
-import type { Payment, PaymentInput } from "@snapdesk/types";
+import type {
+  Payment,
+  PaymentInput,
+  JobFinancialSummary,
+  TeamOutstandingSummary,
+} from "@snapdesk/types";
 
 import { requireActionContext } from "@/lib/require-action-context";
 
@@ -34,4 +41,16 @@ export async function createPaymentAction(input: PaymentInput): Promise<Payment>
 export async function deletePaymentAction(id: string): Promise<boolean> {
   const context = await requireActionContext();
   return deletePaymentService(context, id);
+}
+
+/** P4 F3 — per-job ราคารวม/จ่ายแล้ว/ยอดค้าง for the job detail page. */
+export async function getJobFinancialSummaryAction(jobId: string): Promise<JobFinancialSummary> {
+  const context = await requireActionContext();
+  return getJobFinancialSummaryService(context, jobId);
+}
+
+/** P4 F3 — team-wide outstanding summary for the /jobs list panel. */
+export async function getTeamOutstandingSummaryAction(): Promise<TeamOutstandingSummary> {
+  const context = await requireActionContext();
+  return getTeamOutstandingSummaryService(context);
 }

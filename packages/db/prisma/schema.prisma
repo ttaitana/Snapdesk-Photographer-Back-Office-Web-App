@@ -4,7 +4,7 @@
 //   P1 — Better Auth core tables (User, Session, Account, Verification) +
 //        organization-plugin tables renamed to Team, TeamMember, TeamInvite  [done]
 //   P2 — Customer, Job (+ JobStatus), Payment (+ PaymentType)                [done]
-//   P4 — Package, JobAssignment (+ ShareType)
+//   P4 — Package, JobAssignment (+ ShareType)                                [done]
 //   P6 — Expense, TaxSetting, MemberTaxProfile
 //   P7 — DeliveryQr
 //
@@ -95,6 +95,9 @@ model User {
   /// P2 — jobs this user created (audit trail). See Job.createdById below.
   createdJobs   Job[]         @relation("JobCreatedBy")
 
+  /// P4 — revenue-split assignments across jobs this user worked on.
+  jobAssignments JobAssignment[]
+
   @@map("user")
 }
 
@@ -184,6 +187,9 @@ model Team {
   customers Customer[]
   jobs      Job[]
 
+  /// P4 — quotation packages this team has defined. See SPEC.md §4.
+  packages  Package[]
+
   @@map("team")
 }
 
@@ -232,9 +238,8 @@ model TeamInvite {
 // boundary so the rest of the app can keep using the `number`-based zod
 // schemas in @snapdesk/types (customer.ts/job.ts/payment.ts) unchanged.
 //
-// `Job.packageId` is a plain nullable String with NO Prisma relation yet —
-// the `Package` model doesn't exist until P4, so there's nothing to point
-// to. Add the relation when P4 introduces Package.
+// `Job.packageId` originally had NO Prisma relation (Package didn't exist
+// until P4) — the relation was added below once Package landed.
 
 model Customer {
   id        String   @id @default(cuid())
@@ -304,17 +309,31 @@ model Job {
 
   totalPrice   Decimal   @default(0)
 
-  /// No relation — Package model doesn't exist until P4. See note above.
+  /// P4 — ใบเสนอราคา (Feature 2) fields. Not sketched on Job in SPEC.md §4's
+  /// schema snippet (which has no separate Quotation model either), but the
+  /// feature text explicitly needs them, so they live here next to
+  /// totalPrice/packageId rather than inventing an unsketched model.
+  /// `discount` and `quotedDeposit` are absolute Baht amounts (not %) to
+  /// match how `totalPrice` itself is stored.
+  discount       Decimal?  @default(0)
+  quotedDeposit  Decimal?
+  quoteExpiresAt DateTime?
+
   packageId    String?
+  package      Package?  @relation(fields: [packageId], references: [id])
 
   deliveryLink String?
 
   payments     Payment[]
 
+  /// P4 — revenue-split assignments (F3). See JobAssignment below.
+  assignments  JobAssignment[]
+
   createdAt    DateTime  @default(now())
 
   @@index([teamId])
   @@index([customerId])
+  @@index([packageId])
   @@map("job")
 }
 
@@ -345,4 +364,69 @@ model Payment {
 
   @@index([jobId])
   @@map("payment")
+}
+
+// ── P4 — ใบเสนอราคา (F2) + Tracking & แบ่งรายได้ (F3) ──
+//
+// Package: reusable quotation packages a team can pick from when building a
+// Job's quotation (or the form can be filled manually, leaving packageId
+// null — see jobInputSchema). `price` is Decimal for the same reason as
+// Job.totalPrice. `items` is a free-form JSON list (e.g. ["2 ช่างภาพ", "อัลบั้ม
+// 30 หน้า"]) shown on the PDF/quotation, mirrors Job.checklist's pattern.
+
+model Package {
+  id          String   @id @default(cuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  name        String
+  price       Decimal
+  description String?
+  /// Free-form list of package inclusions, e.g. ["ช่างภาพ 1 คน", "รูปแต่ง 30 ภาพ"].
+  items       Json?
+
+  jobs        Job[]
+
+  createdAt   DateTime @default(now())
+
+  @@index([teamId])
+  @@map("package")
+}
+
+enum ShareType {
+  PERCENT
+  FIXED
+}
+
+// JobAssignment: who worked a job and how the job's payout is split between
+// them. No `teamId` column of its own — scoped via the parent Job, same
+// `requireJobInTeam` pattern as Payment (packages/core/src/payments).
+//
+// Split math (SPEC.md §4, verbatim rule): FIXED shares are deducted from the
+// job total first; PERCENT shares are then computed against what's left
+// after all FIXED shares are removed. Whatever isn't claimed by any
+// assignment is the team/studio's own pool. The sum of all assignments'
+// resolved Baht amounts must never exceed the job's totalPrice — validated
+// in @snapdesk/core, not here.
+model JobAssignment {
+  id         String    @id @default(cuid())
+  jobId      String
+  job        Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Free-text role label for this job specifically (e.g. "ช่างภาพหลัก",
+  /// "ผู้ช่วย", "ตัดต่อ") — distinct from TeamMember.role (team-level
+  /// owner/admin/member permissions).
+  roleOnJob  String?
+
+  shareType  ShareType
+  /// Meaning depends on shareType: a percentage (0–100) when PERCENT, or an
+  /// absolute Baht amount when FIXED.
+  shareValue Decimal
+
+  createdAt  DateTime  @default(now())
+
+  @@unique([jobId, userId])
+  @@map("job_assignment")
 }

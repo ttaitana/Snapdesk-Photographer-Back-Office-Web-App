@@ -28,7 +28,8 @@
     "@snapdesk/core": "workspace:*",
     "@snapdesk/types": "workspace:*",
     "@snapdesk/auth": "workspace:*",
-    "better-auth": "^1.6.11"
+    "better-auth": "^1.6.11",
+    "@react-pdf/renderer": "^4.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.16.10",

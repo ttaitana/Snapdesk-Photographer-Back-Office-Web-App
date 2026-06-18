@@ -17,8 +17,12 @@ import { prisma } from "@snapdesk/db";
 import {
   paymentSchema,
   paymentInputSchema,
+  jobFinancialSummarySchema,
+  teamOutstandingSummarySchema,
   type Payment,
   type PaymentInput,
+  type JobFinancialSummary,
+  type TeamOutstandingSummary,
 } from "@snapdesk/types";
 import type { TeamContext } from "../team-context";
 import { TeamContextError } from "../team-context";
@@ -121,4 +125,75 @@ export async function deletePayment(context: TeamContext, id: string): Promise<b
 /** Avoid float noise like 333.33000000000004 in computed money fields. */
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+/**
+ * P4 F3 — "สถานะการเงินต่องาน": ราคารวม/จ่ายแล้ว/ยอดค้าง for a single job.
+ * `paid` sums every payment's `amount` (the gross amount received, not
+ * netReceived after WHT — what the client actually paid is what's tracked
+ * against totalPrice; WHT bookkeeping is a separate P6 concern).
+ */
+export async function getJobFinancialSummary(
+  context: TeamContext,
+  jobId: string
+): Promise<JobFinancialSummary> {
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, teamId: context.teamId },
+    select: { totalPrice: true },
+  });
+
+  if (!job) {
+    throw new TeamContextError("ไม่พบงานนี้ในทีมของคุณ");
+  }
+
+  const payments = await prisma.payment.findMany({
+    where: { jobId },
+    select: { amount: true },
+  });
+
+  const totalPrice = decimalToNumber(job.totalPrice);
+  const paid = round2(payments.reduce((sum, p) => sum + decimalToNumber(p.amount), 0));
+  const outstanding = round2(totalPrice - paid);
+
+  return jobFinancialSummarySchema.parse({ jobId, totalPrice, paid, outstanding });
+}
+
+/**
+ * P4 F3 — "สรุปยอดค้างรวมทุกงาน": every job in the team with outstanding >
+ * 0, plus the grand total. CANCELLED jobs are excluded — an unpaid
+ * cancelled job isn't money still owed.
+ */
+export async function getTeamOutstandingSummary(
+  context: TeamContext
+): Promise<TeamOutstandingSummary> {
+  const jobs = await prisma.job.findMany({
+    where: { teamId: context.teamId, status: { not: "CANCELLED" } },
+    select: {
+      id: true,
+      title: true,
+      customerId: true,
+      totalPrice: true,
+      payments: { select: { amount: true } },
+    },
+  });
+
+  const outstandingJobs = jobs
+    .map((job) => {
+      const totalPrice = decimalToNumber(job.totalPrice);
+      const paid = round2(job.payments.reduce((sum, p) => sum + decimalToNumber(p.amount), 0));
+      const outstanding = round2(totalPrice - paid);
+      return {
+        jobId: job.id,
+        title: job.title,
+        customerId: job.customerId,
+        totalPrice,
+        paid,
+        outstanding,
+      };
+    })
+    .filter((job) => job.outstanding > 0);
+
+  const totalOutstanding = round2(outstandingJobs.reduce((sum, j) => sum + j.outstanding, 0));
+
+  return teamOutstandingSummarySchema.parse({ totalOutstanding, jobs: outstandingJobs });
 }

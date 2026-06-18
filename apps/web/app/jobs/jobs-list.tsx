@@ -9,6 +9,7 @@ import type { JobFilter, JobStatus } from "@snapdesk/types";
 import { listJobsAction } from "./actions";
 import { useCustomerNames } from "./use-customer-names";
 import { JobsViewTabs } from "./jobs-view-tabs";
+import { OutstandingSummaryPanel } from "./outstanding-summary-panel";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -47,6 +48,8 @@ export function JobsList() {
           </Button>
         </div>
       </div>
+
+      <OutstandingSummaryPanel />
 
       <div className="flex flex-wrap items-center gap-2">
         {RANGE_OPTIONS.map((option) => (
