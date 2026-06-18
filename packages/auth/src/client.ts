@@ -23,6 +23,12 @@ export const authClient = createAuthClient({
           additionalFields: {
             businessName: { type: "string", required: false, input: true },
             taxId: { type: "string", required: false, input: true },
+            revenueBasis: {
+              type: "string",
+              required: false,
+              input: true,
+              defaultValue: "cash",
+            },
           },
         },
       },

@@ -35,3 +35,17 @@ export type ShareType = z.infer<typeof shareTypeSchema>;
 
 export const themeModeSchema = z.enum(["light", "dark", "system"]);
 export type ThemeMode = z.infer<typeof themeModeSchema>;
+
+/** P6 F7 — Team.revenueBasis. "cash" (default) counts income when
+ * Payment.paidAt happens; "accrual" counts it when the Job is
+ * confirmed/delivered instead. See packages/db/prisma/schema.prisma. */
+export const revenueBasisSchema = z.enum(["cash", "accrual"]);
+export type RevenueBasis = z.infer<typeof revenueBasisSchema>;
+
+/** P6 F7 — income/expense summary period grouping. */
+export const summaryPeriodSchema = z.enum(["month", "quarter", "year"]);
+export type SummaryPeriod = z.infer<typeof summaryPeriodSchema>;
+
+/** P6 F7 — "2 มุมมองสลับได้: ทีม (team total) / รายคน (per member)". */
+export const summaryViewSchema = z.enum(["team", "member"]);
+export type SummaryView = z.infer<typeof summaryViewSchema>;

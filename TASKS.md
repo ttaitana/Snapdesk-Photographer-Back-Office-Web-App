@@ -101,11 +101,11 @@
 ## P6 — รายรับรายจ่าย + ภาษีไทย (F7)
 
 **รายรับ-รายจ่าย**
-- [ ] Prisma model `Expense` (+ createdById) + CRUD + แนบรูปใบเสร็จ
-- [ ] สรุปตามช่วงเวลา (เดือน/ไตรมาส/ปี): รายรับ/รายจ่าย/กำไรสุทธิ + กราฟตามหมวด
-- [ ] 2 มุมมองสลับได้: ทีม (team total) / รายคน (per member)
-- [ ] revenue recognition config: cash basis (default) / accrual
-- [ ] สิทธิ์การเห็น: MEMBER เห็นของตัวเอง+ยอดทีม, OWNER/ADMIN เห็นทุกคน
+- [x] Prisma model `Expense` (+ createdById) + CRUD + แนบรูปใบเสร็จ (ลิงก์ URL — ไม่มี file upload infra ในโปรเจกต์นี้ เหมือน `Team.logoUrl`)
+- [x] สรุปตามช่วงเวลา (เดือน/ไตรมาส/ปี): รายรับ/รายจ่าย/กำไรสุทธิ + กราฟตามหมวด
+- [x] 2 มุมมองสลับได้: ทีม (team total) / รายคน (per member)
+- [ ] revenue recognition config: cash basis (default) / accrual — service supports both bases (`Team.revenueBasis`), but no settings UI yet to switch it
+- [x] สิทธิ์การเห็น: MEMBER เห็นของตัวเอง+ยอดทีม, OWNER/ADMIN เห็นทุกคน
 
 **ภาษี (`packages/tax-th` — pure functions + unit test)**
 - [ ] Prisma models: `TaxSetting` (VAT ทีม) + `MemberTaxProfile` (PIT รายคน)

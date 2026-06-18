@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { cuidSchema } from "./common";
-import { teamRoleSchema } from "./enums";
+import { teamRoleSchema, revenueBasisSchema } from "./enums";
 
 export const teamSchema = z.object({
   id: cuidSchema,
@@ -8,6 +8,8 @@ export const teamSchema = z.object({
   businessName: z.string().nullable().optional(),
   logoUrl: z.string().url().nullable().optional(),
   taxId: z.string().nullable().optional(),
+  /** P6 F7 — "revenue recognition config: cash basis (default) / accrual". */
+  revenueBasis: revenueBasisSchema.default("cash"),
   createdAt: z.coerce.date(),
 });
 export type Team = z.infer<typeof teamSchema>;
@@ -22,6 +24,7 @@ export type CreateTeamInput = z.infer<typeof createTeamInputSchema>;
 export const updateTeamInputSchema = createTeamInputSchema.partial().extend({
   teamId: cuidSchema,
   logoUrl: z.string().url().optional(),
+  revenueBasis: revenueBasisSchema.optional(),
 });
 export type UpdateTeamInput = z.infer<typeof updateTeamInputSchema>;
 

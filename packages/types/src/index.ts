@@ -7,3 +7,5 @@ export * from "./payment";
 export * from "./package";
 export * from "./job-assignment";
 export * from "./dashboard";
+export * from "./expense";
+export * from "./finance-summary";

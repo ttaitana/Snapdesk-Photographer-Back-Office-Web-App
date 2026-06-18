@@ -62,3 +62,14 @@ export {
 } from "./job-assignments";
 
 export { getMonthlyIncomeComparison, getFollowUpJobs } from "./dashboard";
+
+export {
+  listExpenses,
+  getExpense,
+  createExpense,
+  updateExpense,
+  deleteExpense,
+  type ListExpensesFilter,
+} from "./expenses";
+
+export { getFinanceSummary } from "./finance-summary";

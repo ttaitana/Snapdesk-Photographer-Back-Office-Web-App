@@ -5,7 +5,8 @@
 //        organization-plugin tables renamed to Team, TeamMember, TeamInvite  [done]
 //   P2 — Customer, Job (+ JobStatus), Payment (+ PaymentType)                [done]
 //   P4 — Package, JobAssignment (+ ShareType)                                [done]
-//   P6 — Expense, TaxSetting, MemberTaxProfile
+//   P6 — Expense (+ Team.revenueBasis)                                  [in progress]
+//        TaxSetting, MemberTaxProfile — deferred to P6's tax sub-phase
 //   P7 — DeliveryQr
 //
 // Full target shape lives in SPEC.md §4 — copy models over verbatim when
@@ -98,6 +99,10 @@ model User {
   /// P4 — revenue-split assignments across jobs this user worked on.
   jobAssignments JobAssignment[]
 
+  /// P6 — expenses this user recorded (audit trail, same convention as
+  /// Job.createdById). See Expense.createdById below.
+  recordedExpenses Expense[] @relation("ExpenseCreatedBy")
+
   @@map("user")
 }
 
@@ -189,6 +194,18 @@ model Team {
 
   /// P4 — quotation packages this team has defined. See SPEC.md §4.
   packages  Package[]
+
+  /// P6 — รายรับ-รายจ่าย (F7). See Expense below.
+  expenses  Expense[]
+
+  /// P6 — revenue recognition basis for the income/expense summary
+  /// ("cash" = count income when Payment.paidAt happens, the default;
+  /// "accrual" = count income when the Job is confirmed/delivered instead).
+  /// Lives directly on Team rather than introducing TaxSetting early —
+  /// TaxSetting/MemberTaxProfile are deferred to P6's tax sub-phase per the
+  /// user's "Expense + Summary first" priority call, and this setting isn't
+  /// tax-specific so it doesn't need to wait for that model to exist.
+  revenueBasis String @default("cash")
 
   @@map("team")
 }
@@ -329,6 +346,10 @@ model Job {
   /// P4 — revenue-split assignments (F3). See JobAssignment below.
   assignments  JobAssignment[]
 
+  /// P6 — expenses linked to this specific job (e.g. travel cost for this
+  /// shoot). Optional — Expense.jobId is nullable for general team expenses.
+  expenses     Expense[]
+
   createdAt    DateTime  @default(now())
 
   @@index([teamId])
@@ -429,4 +450,46 @@ model JobAssignment {
 
   @@unique([jobId, userId])
   @@map("job_assignment")
+}
+
+// ── P6 — รายรับ-รายจ่าย + ภาษีไทย (F7), Expense + Summary sub-phase ──
+//
+// Expense, mirrored from SPEC.md §4. Has its own `teamId` (unlike Payment),
+// so it follows the simpler customers/packages CRUD pattern, not the
+// requireJobInTeam-via-parent pattern. `jobId` is optional — an expense can
+// be tied to a specific shoot (e.g. travel cost) or be a general team
+// expense (e.g. equipment) with jobId left null.
+//
+// `category` is free text (เดินทาง/อุปกรณ์/ผู้ช่วย/อื่นๆ are suggestions, not an
+// enum) — same precedent as Customer.channel/Job.shootType, since SPEC.md's
+// sketch doesn't define a fixed category enum and the UI just needs
+// something to group/filter by.
+//
+// `receiptUrl` is a plain URL string, not a real file upload — the project
+// has no upload/storage infra yet anywhere (Team.logoUrl follows the same
+// pattern), so this matches existing precedent until one exists.
+
+model Expense {
+  id          String    @id @default(cuid())
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  /// Audit: who recorded this expense. See User.recordedExpenses above.
+  createdById String
+  createdBy   User      @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+
+  jobId       String?
+  job         Job?      @relation(fields: [jobId], references: [id])
+
+  category    String
+  amount      Decimal
+  spentAt     DateTime  @default(now())
+  note        String?
+  receiptUrl  String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([teamId])
+  @@index([jobId])
+  @@map("expense")
 }

@@ -140,6 +140,15 @@ export function createAuth(config: CreateAuthConfig) {
             additionalFields: {
               businessName: { type: "string", required: false, input: true },
               taxId: { type: "string", required: false, input: true },
+              /// P6 F7 — "revenue recognition config: cash basis (default) /
+              /// accrual". "cash" | "accrual", see RevenueBasis in
+              /// @snapdesk/types.
+              revenueBasis: {
+                type: "string",
+                required: false,
+                input: true,
+                defaultValue: "cash",
+              },
             },
           },
           member: {

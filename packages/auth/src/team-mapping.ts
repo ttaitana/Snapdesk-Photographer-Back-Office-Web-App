@@ -18,6 +18,11 @@ interface RawTeam {
   businessName?: string | null;
   logo?: string | null;
   taxId?: string | null;
+  /// P6 F7 — "cash" | "accrual", see RevenueBasis in @snapdesk/types. Better
+  /// Auth's additionalFields defaultValue only applies when the field is
+  /// omitted on create, so existing rows from before this field existed
+  /// could in theory be null/undefined too — hence the `?? "cash"` below.
+  revenueBasis?: string | null;
   createdAt: Date | string;
 }
 
@@ -28,6 +33,7 @@ export function toTeam(raw: RawTeam): Team {
     businessName: raw.businessName ?? null,
     logoUrl: raw.logo ?? null,
     taxId: raw.taxId ?? null,
+    revenueBasis: (raw.revenueBasis as Team["revenueBasis"]) ?? "cash",
     createdAt: new Date(raw.createdAt),
   };
 }
