@@ -245,6 +245,11 @@ model Customer {
   phone     String?
   email     String?
   lineId    String?
+  /// IG handle/username — added for task #12 (TASKS.md F5: "form เพิ่ม/แก้
+  /// ลูกค้า ... IG ..."), distinct from `channel` (which channel is the
+  /// customer's *primary* one). Needs `pnpm prisma migrate dev` (or
+  /// equivalent) run locally — no migration runner in this sandbox.
+  instagram String?
   channel   String?
   note      String?
 

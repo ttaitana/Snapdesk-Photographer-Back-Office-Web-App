@@ -71,5 +71,9 @@ export const jobFilterSchema = z.object({
   teamId: cuidSchema,
   status: jobStatusSchema.optional(),
   range: z.enum(["today", "this_week", "all"]).default("all"),
+  /// Added for the customer detail page (task #12, TASKS.md F5: "ประวัติงาน
+  /// ทั้งหมด") — lets it fetch just one customer's jobs instead of the whole
+  /// team's list.
+  customerId: cuidSchema.optional(),
 });
 export type JobFilter = z.infer<typeof jobFilterSchema>;

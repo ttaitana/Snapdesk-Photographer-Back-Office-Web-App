@@ -85,6 +85,7 @@ export async function listJobs(
       teamId: context.teamId,
       ...(parsed.status && { status: parsed.status }),
       ...(shootDateRange && { shootDate: shootDateRange }),
+      ...(parsed.customerId && { customerId: parsed.customerId }),
     },
     orderBy: { shootDate: "asc" },
   });

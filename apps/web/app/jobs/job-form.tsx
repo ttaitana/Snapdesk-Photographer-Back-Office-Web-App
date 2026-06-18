@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 import type { Job } from "@snapdesk/types";
@@ -68,14 +68,23 @@ function valuesFromJob(job: Job): FormValues {
  * (same workaround as the detail page's updateJobAction calls — there's no
  * client team-context hook), while create has no job yet so it reads the
  * active team from Better Auth's useActiveOrganization().
+ *
+ * Create mode also reads a `?customerId=` query param (task #12's "สร้างงาน
+ * ใหม่จากหน้าลูกค้า" shortcut, linked from /customers/[id]) to preselect the
+ * customer — only applied when there's no restored draft, so it never
+ * clobbers in-progress draft data.
  */
 export function JobForm({ mode, job }: { mode: "create" | "edit"; job?: Job }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const draftKey = draftKeyFor(mode, job?.id);
 
   const [values, setValues] = useState<FormValues>(() => {
     const draft = loadDraft<FormValues>(draftKey);
-    return draft ?? (job ? valuesFromJob(job) : EMPTY_VALUES);
+    if (draft) return draft;
+    if (job) return valuesFromJob(job);
+    const presetCustomerId = mode === "create" ? searchParams.get("customerId") : null;
+    return presetCustomerId ? { ...EMPTY_VALUES, customerId: presetCustomerId } : EMPTY_VALUES;
   });
   const [restoredDraft] = useState(() => loadDraft<FormValues>(draftKey) !== null);
   const [error, setError] = useState<string | null>(null);

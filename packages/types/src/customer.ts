@@ -8,6 +8,7 @@ export const customerSchema = z.object({
   phone: z.string().nullable().optional(),
   email: z.string().email().nullable().optional(),
   lineId: z.string().nullable().optional(),
+  instagram: z.string().nullable().optional(),
   channel: z.string().nullable().optional(),
   note: z.string().nullable().optional(),
   createdAt: z.coerce.date(),
@@ -20,6 +21,7 @@ export const customerInputSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email("อีเมลไม่ถูกต้อง").optional().or(z.literal("")),
   lineId: z.string().optional(),
+  instagram: z.string().optional(),
   channel: z.string().optional(),
   note: z.string().optional(),
 });
