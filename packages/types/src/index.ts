@@ -6,3 +6,4 @@ export * from "./job";
 export * from "./payment";
 export * from "./package";
 export * from "./job-assignment";
+export * from "./dashboard";

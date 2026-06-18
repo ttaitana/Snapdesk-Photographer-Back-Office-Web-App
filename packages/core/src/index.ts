@@ -60,3 +60,5 @@ export {
   calculateRevenueSplit,
   JobAssignmentValidationError,
 } from "./job-assignments";
+
+export { getMonthlyIncomeComparison, getFollowUpJobs } from "./dashboard";

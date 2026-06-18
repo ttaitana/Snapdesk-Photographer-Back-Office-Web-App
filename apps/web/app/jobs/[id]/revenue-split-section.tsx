@@ -35,7 +35,10 @@ function previewAmount(
   const remaining = Math.max(round2(jobTotal - fixedTotal), 0);
   const amounts = all.map((a) => (a.shareType === "FIXED" ? a.shareValue : round2(remaining * (a.shareValue / 100))));
   const assignedTotal = round2(amounts.reduce((s, a) => s + a, 0));
-  return { amount: amounts[amounts.length - 1], teamPool: round2(jobTotal - assignedTotal) };
+  // `all` always has >= 1 element (draft is always appended), so this is
+  // never actually undefined — the ?? 0 just satisfies
+  // noUncheckedIndexedAccess.
+  return { amount: amounts[amounts.length - 1] ?? 0, teamPool: round2(jobTotal - assignedTotal) };
 }
 
 function round2(value: number): number {
