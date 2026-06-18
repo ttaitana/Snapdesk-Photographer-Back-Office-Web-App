@@ -117,9 +117,14 @@ export function JobDetail({ id }: { id: string }) {
               {customerNameById.get(job.customerId) ?? "ไม่พบชื่อลูกค้า"}
             </p>
           </div>
-          <span className="shrink-0 rounded-full border border-ink px-3 py-1 text-xs font-medium text-ink">
-            {JOB_STATUS_LABEL[job.status]}
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="rounded-full border border-ink px-3 py-1 text-xs font-medium text-ink">
+              {JOB_STATUS_LABEL[job.status]}
+            </span>
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/jobs/${job.id}/edit`}>แก้ไข</Link>
+            </Button>
+          </div>
         </div>
 
         <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">

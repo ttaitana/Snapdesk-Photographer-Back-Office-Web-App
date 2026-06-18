@@ -61,7 +61,7 @@
 - [x] หน้ารายละเอียดงาน: ถ่ายอะไร/แบบไหน
 - [x] checklist ของที่ต้องใช้ (เพิ่ม/ลบ/ติ๊ก)
 - [x] เก็บพิกัดสถานที่ + ปุ่มเปิด Google Maps นำทาง (deep link) — ใช้ lat/lng ก่อน, fallback เป็น locationUrl ถ้ามี
-- [ ] form สร้าง/แก้คิว + auto-save draft
+- [x] form สร้าง/แก้คิว + auto-save draft
 
 **F5 CRM**
 - [ ] หน้า list ลูกค้า + ค้นหา/ฟิลเตอร์
