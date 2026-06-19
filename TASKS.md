@@ -122,12 +122,12 @@
 
 ## P7 — QR Delivery (F6)
 
-- [ ] Prisma model `DeliveryQr`
-- [ ] วาง link Google Drive / OneDrive ในหน้างาน
-- [ ] generate QR + เก็บค่าใน DB (`packages/integrations/qr`)
-- [ ] ดึง link กลับมา / ดาวน์โหลด QR / ก็อป link ส่ง chat
-- [ ] (optional) นับจำนวนสแกน
-- [ ] (optional) file picker จาก Drive ถ้าเชื่อม account แล้ว
+- [x] Prisma model `DeliveryQr`
+- [x] วาง link Google Drive / OneDrive ในหน้างาน
+- [x] generate QR + เก็บค่าใน DB — `packages/core/src/delivery-qr` (ไม่มี `packages/integrations` จริงในโปรเจกต์นี้ ใช้แนวทางเดียวกับ PDF/Excel ของ P4/P6 ที่ฝัง logic ไว้ใน core/apps ตรงๆ แทน)
+- [x] ดึง link กลับมา / ดาวน์โหลด QR / ก็อป link ส่ง chat
+- [ ] (optional) นับจำนวนสแกน — รอ P8 worker (ต้องมี redirect endpoint ของเราเองก่อนถึงนับสแกนได้ เพราะ QR ฝัง sourceUrl ตรงๆ ไม่ผ่านแอพเรา)
+- [ ] (optional) file picker จาก Drive ถ้าเชื่อม account แล้ว — รอ P9 (ยังไม่มี Google/Microsoft OAuth integration ให้ผูก)
 
 ## P8 — Worker & Queue
 

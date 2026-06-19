@@ -10,3 +10,4 @@ export * from "./dashboard";
 export * from "./expense";
 export * from "./finance-summary";
 export * from "./tax";
+export * from "./delivery-qr";

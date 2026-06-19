@@ -93,3 +93,10 @@ export {
   type TaxExportMemberRow,
   type TaxExportSummary,
 } from "./tax";
+
+export {
+  getDeliveryQr,
+  setDeliveryQr,
+  deleteDeliveryQr,
+  detectProvider,
+} from "./delivery-qr";

@@ -7,7 +7,7 @@
 //   P4 — Package, JobAssignment (+ ShareType)                                [done]
 //   P6 — Expense (+ Team.revenueBasis)                                       [done]
 //        TaxSetting, MemberTaxProfile (ภาษี sub-phase)                 [in progress]
-//   P7 — DeliveryQr
+//   P7 — DeliveryQr                                                  [done]
 //
 // Full target shape lives in SPEC.md §4 — copy models over verbatim when
 // their phase starts so we don't drift from the spec.
@@ -354,6 +354,9 @@ model Job {
 
   deliveryLink String?
 
+  /// P7 — QR Delivery (F6). See DeliveryQr above.
+  deliveryQr   DeliveryQr?
+
   payments     Payment[]
 
   /// P4 — revenue-split assignments (F3). See JobAssignment below.
@@ -571,4 +574,46 @@ model MemberTaxProfile {
 
   @@unique([teamId, userId])
   @@map("member_tax_profile")
+}
+
+// ── P7 — ส่งมอบงานผ่าน QR (F6) ──
+//
+// One delivery QR per job — paste a Google Drive/OneDrive link, we generate
+// a QR that encodes that link directly (scanning it goes straight to the
+// Drive/OneDrive folder — SPEC.md's "ลูกค้าสแกน → เข้าถึงงานได้ทันที", i.e. no
+// redirect through our own app). No teamId of its own (like Payment/
+// JobAssignment) — scoped via the parent Job's requireJobInTeam guard.
+// jobId is unique: a job has at most one delivery QR, so "เปลี่ยนลิงก์" is an
+// upsert that replaces the existing row rather than creating a second one.
+//
+// scanCount/optional file-picker from SPEC.md are intentionally NOT wired up
+// yet: counting scans of a link the QR encodes directly requires routing
+// through our own redirect endpoint first, and TASKS.md P8 already lists
+// "job: QR scan count" as its own worker-backed task — so the column exists
+// for that future phase, but nothing increments it yet.
+model DeliveryQr {
+  id     String @id @default(cuid())
+  jobId  String @unique
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  sourceUrl String // gdrive/onedrive link ต้นทาง
+
+  /// Auto-detected from sourceUrl's host ("google" | "onedrive" | null) —
+  /// see detectProvider() in packages/core/src/delivery-qr. Not user-chosen;
+  /// SPEC.md just says paste whichever link, so we infer it instead of
+  /// asking.
+  provider String?
+
+  /// QR rendered as a PNG data URL (qrcode's toDataURL()) and stored
+  /// directly in this column — no file upload infra in this project (same
+  /// reasoning as Expense.receiptUrl/Team.logoUrl being plain URL strings).
+  qrImageUrl String
+
+  /// (optional in TASKS.md, not yet incremented — see comment above)
+  scanCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("delivery_qr")
 }

@@ -12,6 +12,7 @@ import { QuotationSection } from "./quotation-section";
 import { StatusTimeline } from "./status-timeline";
 import { FinancialSection } from "./financial-section";
 import { RevenueSplitSection } from "./revenue-split-section";
+import { DeliveryQrSection } from "./delivery-qr-section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -181,6 +182,8 @@ export function JobDetail({ id }: { id: string }) {
       <FinancialSection job={job} />
 
       <RevenueSplitSection job={job} />
+
+      <DeliveryQrSection job={job} />
 
       <div className="panel space-y-3 p-5">
         <h3 className="font-heading text-lg uppercase text-ink">checklist อุปกรณ์</h3>
