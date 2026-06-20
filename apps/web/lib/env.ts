@@ -71,3 +71,23 @@ export const integrations = {
   // this in the invite UI so the team isn't left wondering why nothing arrived.
   email: Boolean(env.RESEND_API_KEY),
 } as const;
+
+/** P9 — Calendar Sync. Same shape/purpose as apps/worker/src/env.ts's
+ * calendarSyncProviderConfig — apps/web's Settings → Integrations page
+ * (app/team/integrations/page.tsx) needs its own copy to call
+ * listAvailableCalendars server-side. Keep these two in sync if either
+ * changes. */
+export const calendarProviderConfig = {
+  ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+    ? { google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET } }
+    : {}),
+  ...(env.MS_CLIENT_ID && env.MS_CLIENT_SECRET
+    ? {
+        microsoft: {
+          clientId: env.MS_CLIENT_ID,
+          clientSecret: env.MS_CLIENT_SECRET,
+          tenantId: env.MS_TENANT_ID,
+        },
+      }
+    : {}),
+};

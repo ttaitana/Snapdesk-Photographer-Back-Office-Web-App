@@ -37,6 +37,17 @@ const envSchema = z.object({
   // when this isn't set.
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("Snapdesk <onboarding@resend.dev>"),
+
+  // P9 — Calendar Sync. Same vars as apps/web/lib/env.ts (both processes
+  // need their own copy of these credentials: apps/web to call
+  // listAvailableCalendars from the Settings page, apps/worker to call
+  // syncJobToCalendars from jobs/calendar-sync.ts). Optional — see
+  // calendarSyncProviderConfig below for the matching degrade behavior.
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  MS_CLIENT_ID: z.string().optional(),
+  MS_CLIENT_SECRET: z.string().optional(),
+  MS_TENANT_ID: z.string().default("common"),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -54,3 +65,26 @@ function loadEnv(): Env {
 }
 
 export const env = loadEnv();
+
+/** Built once at startup, passed into every syncJobToCalendars call —
+ * see packages/core/src/calendar-sync's CalendarSyncProviderConfig. A
+ * provider left undefined here means jobs/calendar-sync.ts's call into
+ * @snapdesk/core will throw ProviderNotConfiguredError if it ever actually
+ * needs that provider, but in practice it won't: a user can't have an
+ * enabled CalendarConnection for a provider whose env vars were never set,
+ * since apps/web's Settings page (Task #10) hides connect buttons for
+ * providers where `integrations.google`/`integrations.microsoft` is false. */
+export const calendarSyncProviderConfig = {
+  ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+    ? { google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET } }
+    : {}),
+  ...(env.MS_CLIENT_ID && env.MS_CLIENT_SECRET
+    ? {
+        microsoft: {
+          clientId: env.MS_CLIENT_ID,
+          clientSecret: env.MS_CLIENT_SECRET,
+          tenantId: env.MS_TENANT_ID,
+        },
+      }
+    : {}),
+};

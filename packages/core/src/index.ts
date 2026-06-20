@@ -104,3 +104,19 @@ export {
   getDeliveryQrSourceForRedirect,
   incrementDeliveryQrScanCount,
 } from "./delivery-qr";
+
+export {
+  getProviderStatuses,
+  listAvailableCalendars,
+  getCalendarConnections,
+  replaceCalendarSelection,
+  disconnectProvider,
+  getJobForCalendarSync,
+  syncJobToCalendars,
+  CalendarNotConnectedError,
+  ProviderNotConfiguredError,
+  type CalendarSyncProviderConfig,
+  type CalendarSyncJobInfo,
+} from "./calendar-sync";
+
+export { listDriveFiles } from "./file-picker";

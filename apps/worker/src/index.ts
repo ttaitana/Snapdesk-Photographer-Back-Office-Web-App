@@ -15,11 +15,13 @@ import { env } from "./env";
 import { processShootReminder } from "./jobs/shoot-reminder";
 import { processQrScan } from "./jobs/qr-scan";
 import { processCalendarWebhook } from "./jobs/calendar-webhook";
+import { processCalendarSync } from "./jobs/calendar-sync";
 
 const workers = [
   createQueueWorker(QUEUE_NAMES.shootReminder, env.REDIS_URL, processShootReminder),
   createQueueWorker(QUEUE_NAMES.qrScan, env.REDIS_URL, processQrScan),
   createQueueWorker(QUEUE_NAMES.calendarWebhook, env.REDIS_URL, processCalendarWebhook),
+  createQueueWorker(QUEUE_NAMES.calendarSync, env.REDIS_URL, processCalendarSync),
 ];
 
 console.log(`[worker] listening on queues: ${Object.values(QUEUE_NAMES).join(", ")}`);

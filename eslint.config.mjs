@@ -58,6 +58,12 @@ const dependencyBoundary = {
             message:
               "packages/auth must never import from apps/* — it takes secrets/config as plain arguments from createAuth(); see packages/auth/README.md.",
           },
+          {
+            target: "./packages/integrations",
+            from: "./apps",
+            message:
+              "packages/integrations is a provider-agnostic API client layer (P9) and must never import from apps/* — it takes credentials as plain arguments from createGoogleCalendarClient()/createOutlookCalendarClient(), same pattern as packages/auth.",
+          },
         ],
       },
     ],

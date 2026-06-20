@@ -59,6 +59,9 @@ importers:
       '@snapdesk/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@snapdesk/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
       '@snapdesk/queue':
         specifier: workspace:*
         version: link:../../packages/queue
@@ -191,6 +194,9 @@ importers:
       '@snapdesk/db':
         specifier: workspace:*
         version: link:../db
+      '@snapdesk/integrations':
+        specifier: workspace:*
+        version: link:../integrations
       '@snapdesk/tax-th':
         specifier: workspace:*
         version: link:../tax-th
@@ -223,6 +229,12 @@ importers:
       prisma:
         specifier: ^5.20.0
         version: 5.22.0
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/integrations:
+    devDependencies:
       typescript:
         specifier: ^5.6.3
         version: 5.9.3

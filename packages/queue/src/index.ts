@@ -37,6 +37,7 @@ export const QUEUE_NAMES = {
   shootReminder: "shoot-reminder",
   qrScan: "qr-scan",
   calendarWebhook: "calendar-webhook",
+  calendarSync: "calendar-sync",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -60,6 +61,28 @@ export interface CalendarWebhookJobData {
   provider: "google" | "microsoft";
   payload: unknown;
   receivedAt: string;
+}
+
+/**
+ * P9 — Calendar Sync (F4). Enqueued by apps/web/lib/queue.ts
+ * (scheduleCalendarSync) on every job create/update/delete, for whichever
+ * user triggered the action (`userId` — "the token of whoever clicked the
+ * action", not the job's createdById).
+ *
+ * `calendarEventIds` mirrors @snapdesk/types's CalendarEventIds shape
+ * (`{provider: {calendarId: eventId}}`) without importing that package —
+ * same "plain literal, no cross-package type import" style already used
+ * for CalendarWebhookJobData's `provider` field above. Only read for
+ * action:"delete" — see packages/core/src/calendar-sync's
+ * syncJobToCalendars for why a delete needs this snapshot instead of
+ * reading Job.calendarEventIds back from the DB (the row is already gone
+ * by the time this job runs).
+ */
+export interface CalendarSyncJobData {
+  jobId: string;
+  userId: string;
+  action: "upsert" | "delete";
+  calendarEventIds?: Record<string, Record<string, string>> | null;
 }
 
 /**
@@ -134,6 +157,19 @@ export async function enqueueCalendarWebhook(
 ): Promise<void> {
   const queue = getQueue(QUEUE_NAMES.calendarWebhook, redisUrl);
   await queue.add(data.provider, data);
+}
+
+/** No deterministic jobId/dedupe — unlike enqueueShootReminder, calendar
+ * syncs run immediately (no delay) rather than being scheduled for later,
+ * so there's nothing to cancel/reschedule. Rapid successive edits to the
+ * same job may enqueue several sync jobs back-to-back; harmless, since
+ * syncJobToCalendars re-reads the job's current state at process time
+ * rather than trusting stale data carried in the payload (upsert only —
+ * delete still needs its calendarEventIds snapshot, see that field's
+ * comment above). */
+export async function enqueueCalendarSync(redisUrl: string, data: CalendarSyncJobData): Promise<void> {
+  const queue = getQueue(QUEUE_NAMES.calendarSync, redisUrl);
+  await queue.add(data.action, data);
 }
 
 /**

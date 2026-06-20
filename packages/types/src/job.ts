@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { cuidSchema } from "./common";
 import { jobStatusSchema } from "./enums";
+import { calendarEventIdsSchema } from "./calendar";
 
 export const checklistItemSchema = z.object({
   id: z.string(),
@@ -33,6 +34,10 @@ export const jobSchema = z.object({
   quoteExpiresAt: z.coerce.date().nullable().optional(),
   packageId: cuidSchema.nullable().optional(),
   deliveryLink: z.string().nullable().optional(),
+  /// P9 — written by apps/worker's calendar-sync processor only, never
+  /// accepted as client input (see jobInputSchema/updateJobInputSchema below,
+  /// which deliberately omit it). See CalendarEventIds in ./calendar.ts.
+  calendarEventIds: calendarEventIdsSchema.nullable().optional(),
   createdAt: z.coerce.date(),
 });
 export type Job = z.infer<typeof jobSchema>;

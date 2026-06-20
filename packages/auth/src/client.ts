@@ -41,6 +41,19 @@ export const {
   signIn,
   signUp,
   signOut,
+  // P9 — Calendar Sync (F4). Both are core better-auth client methods (not
+  // plugin-gated — see account.mjs's /link-social and /unlink-account
+  // routes), so no plugin registration was needed above, just exposing
+  // them here. Settings → Integrations page calls:
+  //   linkSocial({ provider: "google" | "microsoft", scopes: CALENDAR_OAUTH_SCOPES[provider], callbackURL: "/settings/integrations" })
+  // to connect, and unlinkAccount({ providerId: provider }) to disconnect —
+  // see @snapdesk/integrations' CALENDAR_OAUTH_SCOPES for the scopes
+  // constant and packages/core/src/calendar-sync's disconnectProvider for
+  // why that core function deliberately does NOT call unlinkAccount itself
+  // (this package can't import @snapdesk/auth, so the Settings page Server
+  // Action must call both).
+  linkSocial,
+  unlinkAccount,
 } = authClient;
 
 /** `authClient.organization.*` — create/update team, invite/remove members,

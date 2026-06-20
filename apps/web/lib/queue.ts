@@ -13,7 +13,9 @@ import {
   cancelShootReminder as cancelShootReminderQueue,
   enqueueQrScan as enqueueQrScanQueue,
   enqueueCalendarWebhook as enqueueCalendarWebhookQueue,
+  enqueueCalendarSync as enqueueCalendarSyncQueue,
   type CalendarWebhookJobData,
+  type CalendarSyncJobData,
 } from "@snapdesk/queue";
 import { env } from "./env";
 
@@ -72,4 +74,24 @@ export async function enqueueCalendarWebhook(data: CalendarWebhookJobData): Prom
   const { REDIS_URL } = env;
   if (!REDIS_URL) return warnDegraded(`calendar webhook (${data.provider})`);
   await enqueueCalendarWebhookQueue(REDIS_URL, data);
+}
+
+/**
+ * P9 — Calendar Sync. Called from app/jobs/actions.ts after every
+ * create/update/delete. `userId` is always the *acting* user (whoever
+ * clicked the action — see CalendarSyncJobData's comment), not the job's
+ * createdById. `calendarEventIds` is only required for action:"delete" —
+ * actions.ts must read it from the job *before* calling deleteJob, since
+ * the row (and its calendarEventIds) won't exist anymore once this
+ * function's caller awaits the delete.
+ */
+export async function scheduleCalendarSync(
+  jobId: string,
+  userId: string,
+  action: CalendarSyncJobData["action"],
+  calendarEventIds?: CalendarSyncJobData["calendarEventIds"]
+): Promise<void> {
+  const { REDIS_URL } = env;
+  if (!REDIS_URL) return warnDegraded(`calendar sync (${action}) for job ${jobId}`);
+  await enqueueCalendarSyncQueue(REDIS_URL, { jobId, userId, action, calendarEventIds });
 }

@@ -127,7 +127,7 @@
 - [x] generate QR + เก็บค่าใน DB — `packages/core/src/delivery-qr` (ไม่มี `packages/integrations` จริงในโปรเจกต์นี้ ใช้แนวทางเดียวกับ PDF/Excel ของ P4/P6 ที่ฝัง logic ไว้ใน core/apps ตรงๆ แทน)
 - [x] ดึง link กลับมา / ดาวน์โหลด QR / ก็อป link ส่ง chat
 - [x] (optional) นับจำนวนสแกน — ทำใน P8: QR เปลี่ยนไป encode redirect endpoint ของเราเอง (`/api/qr/[jobId]`) แทน sourceUrl ตรงๆ แล้ว enqueue job ให้ worker เพิ่ม `scanCount`
-- [ ] (optional) file picker จาก Drive ถ้าเชื่อม account แล้ว — รอ P9 (ยังไม่มี Google/Microsoft OAuth integration ให้ผูก)
+- [x] (optional) file picker จาก Drive ถ้าเชื่อม account แล้ว — ปลดบล็อกจาก P9 แล้ว ทำใน pass นี้: `packages/integrations/src/{file-types,google-drive,outlook-onedrive}.ts` (REST client แบบเดียวกับ calendar client ของ P9 ไม่มี SDK), `packages/core/src/file-picker` (`listDriveFiles`, reuse `withFreshToken` จาก calendar-sync แทนการทำ refresh ซ้ำ — ดู export ใหม่ใน calendar-sync/index.ts), Server Actions ใหม่ใน `apps/web/app/jobs/delivery-qr-actions.ts` (`getConnectedProvidersAction`, `listDriveFilesAction`, scope ผ่าน `userId` ไม่ใช่ team — เหมือน Calendar Sync), UI ใหม่ `apps/web/app/jobs/[id]/delivery-file-picker.tsx` (Dialog เลือกไฟล์ ใส่ลิงก์ลง input เดิมของ `delivery-qr-section.tsx`, ไม่ต้องแก้ `setDeliveryQrAction`/`detectProvider` เลย). **scope ที่ต้องระวัง**: ปุ่ม "เชื่อมต่อ" ใน Settings → Integrations เปลี่ยนไปขอ scope รวม (`CONNECT_OAUTH_SCOPES` = calendar + `drive.readonly`/`Files.Read`) ในการ consent ครั้งเดียว แทนการขอ Drive scope แยกทีหลัง เพราะ Better Auth's `linkSocial` เขียนทับ `Account.scope` ทั้งหมด ไม่ใช่ union — ดูเหตุผลเต็มใน `packages/integrations/src/scopes.ts`. ผลคือ user ที่เชื่อมต่อไว้ก่อนฟีเจอร์นี้จะต้อง "ยกเลิกการเชื่อมต่อ" แล้ว "เชื่อมต่อ" ใหม่ครั้งเดียวเพื่อได้ scope ใหม่ (ปุ่มเดิม ไม่มี flow ใหม่). ยังไม่ verify กับบัญชีจริง (sandbox ไม่มี network) — เหมือน risk ที่ flag ไว้แล้วสำหรับ calendar scope ของ P9
 
 ## P8 — Worker & Queue
 
@@ -140,13 +140,13 @@
 
 ## P9 — Calendar Sync (F4)
 
-- [ ] integration service: Google Calendar (`calendar.events`)
-- [ ] integration service: Outlook (`Calendars.ReadWrite`)
-- [ ] settings → integrations: เชื่อม/ตัดแต่ละ provider แยก + แสดงสถานะ
-- [ ] เลือก default calendar (เลือกได้มากกว่า 1)
-- [ ] sync งาน → สร้าง/แก้/ลบ event (เก็บ `calendarEventIds` per provider)
-- [ ] sync/retry ผ่าน worker + handle token หมดอายุ (refresh)
-- [ ] graceful degrade ถ้ายังไม่เชื่อม provider
+- [x] integration service: Google Calendar (`calendar.events`) — สร้าง `packages/integrations/` ใหม่ (hand-rolled `fetch` REST client, ไม่ใช่ `googleapis`/MSAL SDK) ดู `packages/integrations/src/google-calendar.ts`; scope ตาม TASKS.md เป๊ะๆ แต่ **ยังไม่ verify กับ account จริง** ว่า `calendar.events` พอสำหรับ CalendarList endpoint หรือต้องกว้างกว่านั้น — ดู comment ใน `packages/integrations/src/scopes.ts`
+- [x] integration service: Outlook (`Calendars.ReadWrite`) — `packages/integrations/src/outlook-calendar.ts` (Microsoft Graph v1.0)
+- [x] settings → integrations: เชื่อม/ตัดแต่ละ provider แยก + แสดงสถานะ — `apps/web/app/team/integrations/` (page + panel + actions); เชื่อมผ่าน Better Auth `linkSocial` (reuse Account row เดียวกับ "Sign in with Google/Microsoft" — verified จากอ่าน source `better-auth` ตรงๆ), ตัดผ่าน `unlinkAccount` + `disconnectProvider` (ลำดับ: ลบ `CalendarConnection` ก่อน แล้วค่อย unlink — ดู comment ใน `disconnectProvider`)
+- [x] เลือก default calendar (เลือกได้มากกว่า 1) — `replaceCalendarSelection` (full-replace ทั้งชุดต่อ provider) ผ่าน UI เดียวกัน
+- [x] sync งาน → สร้าง/แก้/ลบ event (เก็บ `calendarEventIds` per provider) — `packages/core/src/calendar-sync` + `Job.calendarEventIds` (Prisma); hook เข้า `createJobAction`/`updateJobAction`/`deleteJobAction` (`apps/web/app/jobs/actions.ts` — delete ต้อง snapshot `calendarEventIds` ก่อนลบ row)
+- [x] sync/retry ผ่าน worker + handle token หมดอายุ (refresh) — `packages/queue` คิว `calendar-sync` ใหม่ → `apps/worker/src/jobs/calendar-sync.ts`; refresh token (proactive + reactive-retry-once) อยู่ใน `withFreshToken` (`packages/core/src/calendar-sync`)
+- [x] graceful degrade ถ้ายังไม่เชื่อม provider — `getProviderStatuses` คืนทั้งสอง provider เสมอ (เชื่อมแล้ว/ยังไม่เชื่อม); ถ้า env ไม่ตั้ง `GOOGLE_CLIENT_ID`/`MS_CLIENT_ID` เลยก็ disable ปุ่มเชื่อมต่อ (`integrations.google`/`integrations.microsoft`, `lib/env.ts`); `scheduleCalendarSync` no-op ถ้าไม่มี `REDIS_URL`
 
 ## P10 — Polish & Release
 

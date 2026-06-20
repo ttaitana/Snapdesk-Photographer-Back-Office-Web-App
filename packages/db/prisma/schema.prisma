@@ -106,6 +106,10 @@ model User {
   /// P6 — this user's own PIT settings (per team). See MemberTaxProfile below.
   taxProfiles MemberTaxProfile[]
 
+  /// P9 — which of this user's connected Google/Outlook calendars to sync
+  /// jobs into. See CalendarConnection below.
+  calendarConnections CalendarConnection[]
+
   @@map("user")
 }
 
@@ -366,6 +370,18 @@ model Job {
   /// shoot). Optional — Expense.jobId is nullable for general team expenses.
   expenses     Expense[]
 
+  /// P9 — Calendar Sync (F4). Per-provider map of {calendarId: eventId} so a
+  /// job synced to multiple calendars (possibly multiple per provider — see
+  /// CalendarConnection below) can be looked up/updated/deleted correctly on
+  /// every provider it's synced to. Shape:
+  /// `{ google: { "<calendarId>": "<eventId>" }, microsoft: { "<calendarId>": "<eventId>" } }`.
+  /// Written by apps/worker's calendar-sync processor only — never accepted
+  /// as client input (same convention as Payment.whtAmount etc.). Whichever
+  /// user triggered the create/update (`createdById` for create; whoever
+  /// called updateJobAction for an edit) is the one whose connected calendars
+  /// get synced — SPEC.md §3: "เวลา sync งานของทีม ใช้ token ของคนที่กด action นั้น".
+  calendarEventIds Json?
+
   createdAt    DateTime  @default(now())
 
   @@index([teamId])
@@ -617,4 +633,52 @@ model DeliveryQr {
   updatedAt DateTime @updatedAt
 
   @@map("delivery_qr")
+}
+
+// ── P9 — Calendar Sync (F4) ──
+//
+// "การเชื่อม Calendar/Drive เป็นของแต่ละ user" (SPEC.md §3) — the OAuth tokens
+// themselves already live on the existing Better Auth `Account` row for that
+// user+providerId ("google" | "microsoft"; see naming note at the top of this
+// file), so no new token-storage model is needed. CalendarConnection only
+// records *which* of that account's calendars the user picked to sync jobs
+// into — "เลือก default calendar ... เลือกได้มากกว่า 1" (SPEC.md F4), so this
+// is one row per selected calendar, not one row per provider.
+//
+// `calendarName` is cached at selection time purely for display (Settings →
+// Integrations list) without an extra API round-trip — it's not re-validated
+// against the provider, so a calendar renamed on Google/Outlook's side will
+// show its old name here until the user re-opens the picker and re-saves.
+//
+// "เชื่อมแล้ว/ยังไม่เชื่อม" status (SPEC.md F4) is derived from whether an
+// Account row exists for that provider, NOT from this table — a user can
+// have a connected Account with zero CalendarConnection rows (connected, but
+// hasn't picked a calendar yet). See packages/core/src/calendar-sync.
+model CalendarConnection {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// "google" | "microsoft" — matches Better Auth's Account.providerId for
+  /// the same two values, intentionally a plain string (not a Prisma enum)
+  /// for the same reason TeamMember.role is, see CalendarProvider in
+  /// @snapdesk/types/calendar.ts.
+  provider String
+
+  /// The provider's own calendar id (Google: calendarList entry id, often an
+  /// email-shaped string for the primary calendar; Microsoft: Graph calendar
+  /// id) — opaque to us, just round-tripped back to the provider's API.
+  calendarId   String
+  calendarName String
+
+  /// Lets a user temporarily pause syncing to one calendar without losing
+  /// the selection (uncheck instead of delete+re-pick). Sync (worker) only
+  /// considers rows where enabled = true.
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, provider, calendarId])
+  @@index([userId])
+  @@map("calendar_connection")
 }

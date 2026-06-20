@@ -1,5 +1,5 @@
 {
-  "name": "@snapdesk/core",
+  "name": "@snapdesk/integrations",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -13,19 +13,10 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
     "clean": "rm -rf .turbo"
   },
-  "dependencies": {
-    "@snapdesk/types": "workspace:*",
-    "@snapdesk/db": "workspace:*",
-    "@snapdesk/tax-th": "workspace:*",
-    "@snapdesk/integrations": "workspace:*",
-    "qrcode": "^1.5.4"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.4",
-    "@types/qrcode": "^1.5.5"
+    "typescript": "^5.6.3"
   }
 }

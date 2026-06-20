@@ -10,6 +10,7 @@ import {
   setDeliveryQrAction,
   deleteDeliveryQrAction,
 } from "../delivery-qr-actions";
+import { DeliveryFilePicker } from "./delivery-file-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -170,7 +171,10 @@ function DeliveryLinkForm({
       className="flex flex-col gap-2 sm:flex-row sm:items-end"
     >
       <div className="flex-1 space-y-1.5">
-        <Label htmlFor="deliveryLink">ลิงก์ Google Drive / OneDrive</Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="deliveryLink">ลิงก์ Google Drive / OneDrive</Label>
+          <DeliveryFilePicker onSelect={setSourceUrl} />
+        </div>
         <Input
           id="deliveryLink"
           value={sourceUrl}

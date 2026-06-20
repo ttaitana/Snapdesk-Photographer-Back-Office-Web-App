@@ -29,7 +29,9 @@
       "@snapdesk/tax-th": ["packages/tax-th/src/index.ts"],
       "@snapdesk/tax-th/*": ["packages/tax-th/src/*"],
       "@snapdesk/queue": ["packages/queue/src/index.ts"],
-      "@snapdesk/queue/*": ["packages/queue/src/*"]
+      "@snapdesk/queue/*": ["packages/queue/src/*"],
+      "@snapdesk/integrations": ["packages/integrations/src/index.ts"],
+      "@snapdesk/integrations/*": ["packages/integrations/src/*"]
     }
   }
 }

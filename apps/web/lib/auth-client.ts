@@ -11,6 +11,8 @@ export {
   signIn,
   signUp,
   signOut,
+  linkSocial,
+  unlinkAccount,
   organizationApi,
   useActiveOrganization,
   useListOrganizations,

@@ -45,6 +45,10 @@ function toJob(row: {
   quoteExpiresAt: Date | null;
   packageId: string | null;
   deliveryLink: string | null;
+  /// P9 — see Job.calendarEventIds in schema.prisma. `unknown` here, same as
+  /// `checklist` above — jobSchema's calendarEventIdsSchema validates the
+  /// actual shape.
+  calendarEventIds?: unknown;
   createdAt: Date;
 }): Job {
   return jobSchema.parse({
@@ -53,6 +57,7 @@ function toJob(row: {
     totalPrice: decimalToNumber(row.totalPrice),
     discount: nullableDecimalToNumber(row.discount),
     quotedDeposit: nullableDecimalToNumber(row.quotedDeposit),
+    calendarEventIds: row.calendarEventIds ?? null,
   });
 }
 
