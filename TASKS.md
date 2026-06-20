@@ -162,7 +162,12 @@
 ---
 
 ### Definition of Done (ต่อ task)
-- [ ] scope ด้วย teamId + authorize ครบ
-- [ ] type ผ่าน (no `any` ที่ไม่จำเป็น)
-- [ ] logic หลักอยู่ใน `packages/core` / `packages/tax-th` (ไม่ผูก Next.js)
-- [ ] โค้ด minimal/readable ตามแนวทางในโปรเจกต์
+
+> ตรวจย้อนทั้งโปรเจกต์ 2026-06-20 (อ่านโค้ดจริงทุก service ใน `packages/core`,
+> ทุก `actions.ts`/`route.ts` ใน `apps/web`, และ eslint config) — ดูรายละเอียด
+> ข้อยกเว้นที่ตั้งใจไว้ในแต่ละบรรทัด
+
+- [x] scope ด้วย teamId + authorize ครบ — ทุก service function รับ `TeamContext` และ resolve ผ่าน `requireActionContext()`/`requireTeamContext()`; ตาราง (`Payment`/`JobAssignment`/`DeliveryQr`) ที่ไม่มี `teamId` ของตัวเองมี `requireJobInTeam()` guard ก่อนทุกครั้ง endpoint ที่เป็น public โดยตั้งใจ (`/api/qr/[jobId]`, calendar webhooks) มี comment อธิบาย trust model ไว้ชัดเจน
+- [x] type ผ่าน (no `any` ที่ไม่จำเป็น) — grep ทั้ง repo ไม่พบ `: any`/`as any` ที่เป็นโค้ดจริงเลย (เจอแต่คำว่า "any" ในคอมเมนต์ภาษาอังกฤษ); eslint `recommended` (รวม `no-explicit-any`) บังคับอยู่แล้ว — **ยังไม่ได้รัน `pnpm typecheck` จริงเพื่อยืนยัน compile ผ่าน** (bash sandbox ของ session นี้ไม่น่าเชื่อถือสำหรับรัน build/typecheck ตามที่บันทึกไว้) แนะนำให้ Judy รัน `pnpm typecheck` เองอีกครั้งก่อน release
+- [x] logic หลักอยู่ใน `packages/core` / `packages/tax-th` (ไม่ผูก Next.js) — eslint boundary rule บังคับ `core`/`types`/`db`/`auth`/`integrations` ห้าม import จาก `apps/*`; `apps/web` ไม่มี business logic ของจริง มีแค่ 2 จุดที่ "mirror" pure function จาก core ไว้ฝั่ง client เพื่อ live-preview ก่อน submit (`revenue-split-section.tsx` mirror `calculateRevenueSplit`, `pit-bracket-editor.tsx` mirror `DEFAULT_PIT_BRACKETS`) — ทั้งสองคอมเมนต์บอกเหตุผลไว้ตรงๆ และ server จะ re-validate ด้วยฟังก์ชันจริงเสมอ ไม่ใช่จุดที่ตัดสินผลจริง
+- [x] โค้ด minimal/readable ตามแนวทางในโปรเจกต์ — สุ่มอ่าน `payments`, `job-assignments`, `delivery-qr`, `customers/actions` แล้ว: function เดียวรับผิดชอบเดียว, มี doc comment อธิบาย "ทำไม" ไม่ใช่แค่ "ทำอะไร" สม่ำเสมอทั้งโปรเจกต์; ไฟล์ที่ใหญ่สุด (`tax/index.ts`, `finance-summary/index.ts`) ยาวเพราะรวม logic ที่เกี่ยวกันจริง (VAT/WHT/PIT หรือสรุปการเงินหลายมุมมอง) ไม่ใช่เพราะไม่ refactor
