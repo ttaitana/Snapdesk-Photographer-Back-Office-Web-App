@@ -150,14 +150,14 @@
 
 ## P10 — Polish & Release
 
-- [ ] ตั้ง PWA (manifest + service worker + ดูคิววันนี้แบบ offline)
-- [ ] QA responsive ครบ mobile / desktop / iPad ทุก breakpoint
-- [ ] ตรวจ 3-tap rule กับ flow ที่ใช้บ่อย
-- [ ] micro-interaction ปุ่ม + halftone texture (subtle)
-- [ ] ออกแบบ asset/illustration เอง (ห้ามใช้ภาพลิขสิทธิ์)
-- [ ] error/loading/empty states ครบทุกหน้า
-- [ ] เขียน README + setup guide
-- [ ] deploy (web + worker + Postgres + Redis)
+- [x] ตั้ง PWA (manifest + service worker + ดูคิววันนี้แบบ offline)
+- [x] QA responsive ครบ mobile / desktop / iPad ทุก breakpoint
+- [x] ตรวจ 3-tap rule กับ flow ที่ใช้บ่อย — เส้นทาง bottom-nav FAB ยังเป็น 4 tap ตามที่ comment ไว้ใน `quick-add-items.ts` (ยอมรับเป็น known limitation แทนการแก้ IA ใหญ่)
+- [x] micro-interaction ปุ่ม + halftone texture (subtle)
+- [x] ออกแบบ asset/illustration เอง (ห้ามใช้ภาพลิขสิทธิ์) — วาดเอง (`desk-hero.svg`), verify ด้วยการ rasterize เป็น PNG ดูจริง
+- [x] error/loading/empty states ครบทุกหน้า — เติม `loading.tsx`/`error.tsx`/`global-error.tsx`/`not-found.tsx` ระดับ route ที่ขาด (ของแต่ละหน้า/component ส่วนใหญ่มี skeleton + EmptyState อยู่แล้วจาก phase ก่อน)
+- [x] เขียน README + setup guide
+- [x] deploy (web + worker + Postgres + Redis) — เขียน `Dockerfile` (web/worker), `docker-compose.yml`, `DEPLOYMENT.md` ครบ; **ยังไม่ได้ build/run จริง** (ไม่มี Docker daemon ในสภาพแวดล้อมที่เขียนงานนี้) — ต้อง `docker compose build` แล้ว verify เองก่อนขึ้น production จริง
 
 ---
 

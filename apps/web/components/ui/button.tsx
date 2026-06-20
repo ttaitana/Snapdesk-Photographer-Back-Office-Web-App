@@ -14,8 +14,13 @@ const buttonVariants = cva(
         primary:
           "bg-primary text-primary-foreground border-2 border-ink shadow-hard-sm hover:translate-y-[1px] hover:shadow-none",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        // P10 micro-interaction pass (TASKS.md, SPEC.md §3.4: "haptic-feel"
+        // on press) — outline is the most-used non-primary variant (cancel,
+        // pagination, filter toggles, ...), so it gets the same hard-shadow
+        // press effect as default/primary instead of just the bare
+        // hover:bg-secondary it had before.
         outline:
-          "border-2 border-ink bg-background hover:bg-secondary",
+          "border-2 border-ink bg-background shadow-hard-sm hover:translate-y-[1px] hover:bg-secondary hover:shadow-none",
         secondary: "bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80",
         ghost: "hover:bg-secondary hover:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",

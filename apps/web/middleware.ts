@@ -23,8 +23,24 @@ import { getSessionCookie } from "better-auth/cookies";
  * silently break (a customer gets bounced to a login page instead of their
  * files; a webhook provider gets an HTML redirect instead of a 200/202 and
  * treats it as a delivery failure).
+ *
+ * /offline (P10 PWA, TASKS.md) is here for a similar reason: sw.js's
+ * navigation fallback serves this page straight from the Cache API when the
+ * network is unreachable, which never reaches this middleware at all — but
+ * if a visitor hits the URL directly while online (or a stale tab reloads
+ * it), it shouldn't bounce them to /login first. The page itself has no
+ * secrets; it only re-displays whatever /api/jobs/today already returned
+ * (and that route IS still session-gated) before the connection dropped.
  */
-const PUBLIC_PATHS = ["/login", "/register", "/logout", "/api/auth", "/api/qr", "/api/webhooks"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/register",
+  "/logout",
+  "/api/auth",
+  "/api/qr",
+  "/api/webhooks",
+  "/offline",
+];
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true;

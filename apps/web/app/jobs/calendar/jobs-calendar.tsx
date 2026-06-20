@@ -85,7 +85,7 @@ export function JobsCalendar() {
       {jobsQuery.isLoading ? (
         <div className="grid grid-cols-7 gap-1.5">
           {Array.from({ length: 35 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+            <Skeleton key={i} className="h-16 w-full sm:h-24" />
           ))}
         </div>
       ) : jobsQuery.isError ? (
@@ -109,7 +109,11 @@ export function JobsCalendar() {
               return (
                 <div
                   key={key}
-                  className={`min-h-24 border-b border-r border-ink/20 p-1.5 last:border-r-0 ${
+                  // min-h-16 on phones (P10 responsive QA, TASKS.md) — a
+                  // 7-col grid at min-h-24 ran the month view past two
+                  // screens of scroll on a 375px-wide phone; sm:min-h-24
+                  // keeps the roomier cells from iPad/desktop up.
+                  className={`min-h-16 border-b border-r border-ink/20 p-1.5 last:border-r-0 sm:min-h-24 ${
                     isCurrentMonth ? "bg-card" : "bg-muted/30"
                   }`}
                 >

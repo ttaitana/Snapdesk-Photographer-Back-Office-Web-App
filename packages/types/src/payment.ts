@@ -39,9 +39,13 @@ export const jobFinancialSummarySchema = z.object({
 export type JobFinancialSummary = z.infer<typeof jobFinancialSummarySchema>;
 
 /** One row in the team-wide outstanding list (task #13's /jobs summary
- * panel) — only jobs with outstanding > 0 are included by the service. */
+ * panel) — only jobs with outstanding > 0 are included by the service.
+ * teamId is included (P10 3-tap rule fix, TASKS.md) so the dashboard/jobs
+ * quick-pay button can call createPaymentAction directly from this list
+ * without an extra round trip to resolve the caller's team. */
 export const teamOutstandingJobSchema = z.object({
   jobId: cuidSchema,
+  teamId: cuidSchema,
   title: z.string(),
   customerId: cuidSchema,
   totalPrice: z.number().nonnegative(),

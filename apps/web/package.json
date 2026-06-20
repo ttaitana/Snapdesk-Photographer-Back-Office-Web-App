@@ -44,7 +44,7 @@
     "tailwindcss-animate": "^1.0.7",
     "postcss": "^8.4.47",
     "autoprefixer": "^10.4.20",
-    "eslint": "^10.5.0",
+    "eslint": "^9.39.1",
     "eslint-config-next": "^16.2.9"
   }
 }

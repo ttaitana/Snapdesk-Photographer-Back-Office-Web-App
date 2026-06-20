@@ -1,0 +1,97 @@
+# Full self-hosted stack: web + worker + Postgres + Redis (P10 task #8,
+# TASKS.md). See DEPLOYMENT.md for usage, env var setup, and the managed-
+# hosting alternative (Vercel + Railway/Render/Fly) for anyone who'd rather
+# not run this on their own VM.
+#
+# `migrate` is a one-shot service (`prisma migrate deploy`, non-interactive
+# — unlike `pnpm db:migrate`'s dev-only `migrate dev`) that web/worker both
+# wait on via `service_completed_successfully`, so a fresh stack never
+# starts serving traffic against an un-migrated database.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: snapdesk
+      POSTGRES_PASSWORD: snapdesk
+      POSTGRES_DB: snapdesk
+    volumes:
+      - snapdesk-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snapdesk"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - snapdesk-redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-off: applies pending Prisma migrations, then exits. Reuses the
+  # worker image since it already has the full repo + pnpm installed (the
+  # web image's runner stage only has Next's pruned standalone output).
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    command: ["pnpm", "--filter", "@snapdesk/db", "migrate:deploy"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://snapdesk:snapdesk@postgres:5432/snapdesk
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://snapdesk:snapdesk@postgres:5432/snapdesk
+      REDIS_URL: redis://redis:6379
+      APP_URL: ${APP_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://snapdesk:snapdesk@postgres:5432/snapdesk
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  snapdesk-postgres-data:
+  snapdesk-redis-data:

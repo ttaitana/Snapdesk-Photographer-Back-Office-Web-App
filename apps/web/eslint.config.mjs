@@ -11,12 +11,14 @@ export default [
   ...nextVitals,
   {
     // eslint-plugin-react's React-version auto-detection (used by rules like
-    // react/display-name) still calls the deprecated context.getFilename(),
-    // which ESLint 10 removed outright — that crashes the whole lint run
-    // ("contextOrFilename.getFilename is not a function"). Detection only
-    // runs when no version is configured, so setting it explicitly (matches
-    // apps/web/package.json's react dependency) skips that code path
-    // entirely rather than waiting on an upstream eslint-plugin-react fix.
+    // react/display-name) calls the deprecated context.getFilename(), which
+    // ESLint 10 removes outright (crashes with "contextOrFilename.getFilename
+    // is not a function"). We're pinned back to ESLint 9.x for now (see the
+    // comment in ../../eslint.config.mjs re: typescript-eslint's missing
+    // addGlobals), so this specific crash isn't live today — but detection
+    // only runs when no version is configured, so setting it explicitly
+    // (matches apps/web/package.json's react dependency) skips that code
+    // path entirely and keeps this ready for whenever we move back to v10.
     settings: { react: { version: "19.0.0" } },
   },
 ];

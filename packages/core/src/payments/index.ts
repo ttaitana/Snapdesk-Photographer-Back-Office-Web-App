@@ -184,6 +184,7 @@ export async function getTeamOutstandingSummary(
       const outstanding = round2(totalPrice - paid);
       return {
         jobId: job.id,
+        teamId: context.teamId,
         title: job.title,
         customerId: job.customerId,
         totalPrice,

@@ -83,7 +83,12 @@ export function StatusTimeline({ job }: { job: Job }) {
                   disabled={statusMutation.isPending || isCurrent}
                   onClick={() => statusMutation.mutate(step)}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 font-medium transition-colors",
+                    // active:scale-95 — P10 micro-interaction pass (TASKS.md):
+                    // these are plain <button>s (not the shared Button
+                    // component, since the stepper needs its pill shape), so
+                    // the haptic-feel press SPEC.md §3.4 asks for is added
+                    // directly here instead.
+                    "flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 font-medium transition-all active:scale-95",
                     isCurrent && "border-primary bg-primary text-primary-foreground",
                     isDone && !isCurrent && "border-ink/40 bg-surface text-muted-foreground hover:border-ink",
                     !isDone && !isCurrent && "border-ink/20 bg-surface text-muted-foreground hover:border-ink",

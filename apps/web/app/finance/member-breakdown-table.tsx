@@ -16,21 +16,27 @@ export function MemberBreakdownTable({ members }: { members: MemberIncomeTotal[]
   const sorted = [...members].sort((a, b) => b.income - a.income);
 
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b border-ink/20 text-left text-muted-foreground">
-          <th className="py-1.5 font-normal">สมาชิก</th>
-          <th className="py-1.5 text-right font-normal">รายรับ</th>
-        </tr>
-      </thead>
-      <tbody>
-        {sorted.map((member) => (
-          <tr key={member.userId} className="border-b border-ink/10 last:border-0">
-            <td className="py-1.5 text-ink">{member.name}</td>
-            <td className="py-1.5 text-right font-medium text-ink">฿{formatCurrency(member.income)}</td>
+    // overflow-x-auto — P10 responsive QA (TASKS.md): same guard as the two
+    // tax tables (member-tax-panel.tsx, pit-bracket-editor.tsx) so a long
+    // member name on a narrow phone scrolls the table instead of squeezing
+    // the amount column or overflowing the panel.
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-ink/20 text-left text-muted-foreground">
+            <th className="py-1.5 font-normal">สมาชิก</th>
+            <th className="py-1.5 text-right font-normal">รายรับ</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {sorted.map((member) => (
+            <tr key={member.userId} className="border-b border-ink/10 last:border-0">
+              <td className="py-1.5 text-ink">{member.name}</td>
+              <td className="py-1.5 text-right font-medium text-ink">฿{formatCurrency(member.income)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

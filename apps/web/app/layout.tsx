@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, IBM_Plex_Sans_Thai } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
+import { RegisterServiceWorker } from "@/components/register-service-worker";
 import "@/lib/env"; // validates process.env on startup — throws early if misconfigured
 import "./globals.css";
 
@@ -22,9 +23,28 @@ const body = IBM_Plex_Sans_Thai({
   display: "swap",
 });
 
+// P10 PWA (TASKS.md: "ตั้ง PWA — manifest + service worker"). manifest +
+// appleWebApp here cover the install/home-screen side; sw.js (registered by
+// <RegisterServiceWorker> below) covers the runtime caching/offline side.
 export const metadata: Metadata = {
   title: "Snapdesk",
   description: "ผู้ช่วยจัดการงานหลังบ้านสำหรับช่างภาพ — คิวงาน ใบเสนอราคา การเงิน และภาษี",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Snapdesk",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#2e7dc4",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -34,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="snapdesk-theme">
           <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
+        <RegisterServiceWorker />
       </body>
     </html>
   );

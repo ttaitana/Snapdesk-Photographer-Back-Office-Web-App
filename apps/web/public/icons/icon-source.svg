@@ -1,0 +1,33 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Original Snapdesk app icon — hand-drawn for P10 (TASKS.md: "ออกแบบ
+    asset/illustration เอง ห้ามใช้ภาพลิขสิทธิ์"). A simple retro camera
+    glyph in the spec's color tokens (SPEC.md §3.2/§3.4): thick ink border,
+    flat accent-yellow body, hard offset shadow, subtle halftone dots.
+    Rasterized to PNG via ImageMagick — see scripts/generate-icons.sh.
+  -->
+  <defs>
+    <pattern id="halftone" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="2.4" fill="#16202b" opacity="0.06" />
+    </pattern>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="#2e7dc4" />
+  <rect width="512" height="512" rx="96" fill="url(#halftone)" />
+
+  <!-- hard shadow offset behind the camera body -->
+  <rect x="100" y="196" width="320" height="220" rx="28" fill="#16202b" />
+
+  <!-- camera body -->
+  <rect x="88" y="184" width="320" height="220" rx="28" fill="#ffd21e" stroke="#16202b" stroke-width="14" />
+
+  <!-- viewfinder bump -->
+  <rect x="168" y="140" width="120" height="56" rx="14" fill="#ffd21e" stroke="#16202b" stroke-width="14" />
+
+  <!-- lens -->
+  <circle cx="248" cy="296" r="76" fill="#dce9f5" stroke="#16202b" stroke-width="14" />
+  <circle cx="248" cy="296" r="34" fill="#2e7dc4" stroke="#16202b" stroke-width="10" />
+
+  <!-- shutter button -->
+  <circle cx="358" cy="232" r="16" fill="#e23b3b" stroke="#16202b" stroke-width="8" />
+</svg>

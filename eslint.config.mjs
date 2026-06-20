@@ -1,5 +1,14 @@
 // Root ESLint flat config — replaces the old .eslintrc.cjs now that ESLint 8
-// (EOL Oct 2024) is gone in favor of ESLint 10's flat-config-only system.
+// (EOL Oct 2024) is gone in favor of flat config as the default system.
+//
+// Pinned to ESLint 9.x (not 10): ESLint 10 requires every ScopeManager to
+// implement `addGlobals()`, but @typescript-eslint's scope manager doesn't
+// yet (still open upstream as of 2026-06: typescript-eslint/typescript-eslint
+// issues #11762/#11830/#11830) — every TS project crashes on startup with
+// "scopeManager.addGlobals is not a function" before any rule runs. 9.39.1
+// is the last confirmed-working line per that issue. Bump `eslint`/`@eslint/js`
+// back to ^10 in package.json (here and apps/web/package.json) once
+// typescript-eslint ships the fix.
 //
 // Flat config only ever loads ONE config file: the nearest eslint.config.*
 // to the linted directory. packages/core, packages/types, and packages/db

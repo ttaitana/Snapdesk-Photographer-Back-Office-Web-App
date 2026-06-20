@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getTeamOutstandingSummaryAction } from "./payments-actions";
 import { useCustomerNames } from "./use-customer-names";
+import { QuickPayButton } from "./quick-pay-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 
@@ -51,10 +52,13 @@ export function OutstandingSummaryPanel() {
       </div>
       <ul className="space-y-1.5 border-t border-ink/20 pt-3">
         {jobs.map((job) => (
-          <li key={job.jobId}>
+          // Link and QuickPayButton are siblings, not nested (P10 3-tap rule
+          // fix, TASKS.md) — a <button> inside an <a> is both invalid HTML
+          // and would fire the row navigation on every tap of "รับเงิน".
+          <li key={job.jobId} className="flex items-center justify-between gap-3 text-sm">
             <Link
               href={`/jobs/${job.jobId}`}
-              className="flex items-center justify-between gap-3 text-sm hover:underline"
+              className="flex min-w-0 flex-1 items-center justify-between gap-3 hover:underline"
             >
               <span className="min-w-0 truncate text-ink">
                 {job.title}
@@ -64,6 +68,7 @@ export function OutstandingSummaryPanel() {
               </span>
               <span className="shrink-0 font-medium text-danger">฿{formatCurrency(job.outstanding)}</span>
             </Link>
+            <QuickPayButton job={job} />
           </li>
         ))}
       </ul>
