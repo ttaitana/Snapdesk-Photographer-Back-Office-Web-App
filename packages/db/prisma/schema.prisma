@@ -576,21 +576,21 @@ model MemberTaxProfile {
   @@map("member_tax_profile")
 }
 
-// ── P7 — ส่งมอบงานผ่าน QR (F6) ──
+// ── P7 — ส่งมอบงานผ่าน QR (F6), updated in P8 ──
 //
 // One delivery QR per job — paste a Google Drive/OneDrive link, we generate
-// a QR that encodes that link directly (scanning it goes straight to the
-// Drive/OneDrive folder — SPEC.md's "ลูกค้าสแกน → เข้าถึงงานได้ทันที", i.e. no
-// redirect through our own app). No teamId of its own (like Payment/
-// JobAssignment) — scoped via the parent Job's requireJobInTeam guard.
-// jobId is unique: a job has at most one delivery QR, so "เปลี่ยนลิงก์" is an
-// upsert that replaces the existing row rather than creating a second one.
+// a QR for it. No teamId of its own (like Payment/JobAssignment) — scoped
+// via the parent Job's requireJobInTeam guard. jobId is unique: a job has at
+// most one delivery QR, so "เปลี่ยนลิงก์" is an upsert that replaces the
+// existing row rather than creating a second one.
 //
-// scanCount/optional file-picker from SPEC.md are intentionally NOT wired up
-// yet: counting scans of a link the QR encodes directly requires routing
-// through our own redirect endpoint first, and TASKS.md P8 already lists
-// "job: QR scan count" as its own worker-backed task — so the column exists
-// for that future phase, but nothing increments it yet.
+// P8 update: the QR now encodes our own redirect URL
+// (`${appUrl}/api/qr/{jobId}`, apps/web/app/api/qr/[jobId]/route.ts)
+// instead of sourceUrl directly — that route enqueues a scan-count job
+// (apps/worker/src/jobs/qr-scan.ts) then 302s to sourceUrl, which is how
+// scanCount below gets incremented. QR images generated before this change
+// still encode the old direct link and keep working, just without scan
+// counting until the link is pasted again.
 model DeliveryQr {
   id     String @id @default(cuid())
   jobId  String @unique
@@ -609,7 +609,8 @@ model DeliveryQr {
   /// reasoning as Expense.receiptUrl/Team.logoUrl being plain URL strings).
   qrImageUrl String
 
-  /// (optional in TASKS.md, not yet incremented — see comment above)
+  /// Incremented by apps/worker's qr-scan job — see comment above and
+  /// packages/core/src/delivery-qr's incrementDeliveryQrScanCount().
   scanCount Int @default(0)
 
   createdAt DateTime @default(now())

@@ -27,7 +27,9 @@
       "@snapdesk/auth": ["packages/auth/src/index.ts"],
       "@snapdesk/auth/*": ["packages/auth/src/*"],
       "@snapdesk/tax-th": ["packages/tax-th/src/index.ts"],
-      "@snapdesk/tax-th/*": ["packages/tax-th/src/*"]
+      "@snapdesk/tax-th/*": ["packages/tax-th/src/*"],
+      "@snapdesk/queue": ["packages/queue/src/index.ts"],
+      "@snapdesk/queue/*": ["packages/queue/src/*"]
     }
   }
 }

@@ -16,8 +16,15 @@ import { getSessionCookie } from "better-auth/cookies";
  * requires a logged-in session per Better Auth's organization plugin docs,
  * so an unauthenticated visitor is correctly bounced to /login first; the
  * ?redirect= param this sets sends them straight back afterwards.
+ *
+ * /api/qr (P8) and /api/webhooks (P8) ARE here deliberately — the former is
+ * hit by customers scanning a QR with no session, the latter by Google/MS
+ * servers with no cookie at all. Without this, both would 302 to /login and
+ * silently break (a customer gets bounced to a login page instead of their
+ * files; a webhook provider gets an HTML redirect instead of a 200/202 and
+ * treats it as a delivery failure).
  */
-const PUBLIC_PATHS = ["/login", "/register", "/logout", "/api/auth"];
+const PUBLIC_PATHS = ["/login", "/register", "/logout", "/api/auth", "/api/qr", "/api/webhooks"];
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true;

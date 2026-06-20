@@ -12,15 +12,18 @@ import {
 import type { DeliveryQr, SetDeliveryQrInput } from "@snapdesk/types";
 
 import { requireActionContext } from "@/lib/require-action-context";
+import { env } from "@/lib/env";
 
 export async function getDeliveryQrAction(jobId: string): Promise<DeliveryQr | null> {
   const context = await requireActionContext();
   return getDeliveryQrService(context, jobId);
 }
 
+/** Passes APP_URL so the QR encodes our own redirect endpoint (P8) —
+ * see the file header note in packages/core/src/delivery-qr. */
 export async function setDeliveryQrAction(input: SetDeliveryQrInput): Promise<DeliveryQr> {
   const context = await requireActionContext();
-  return setDeliveryQrService(context, input);
+  return setDeliveryQrService(context, input, env.APP_URL);
 }
 
 export async function deleteDeliveryQrAction(jobId: string): Promise<boolean> {

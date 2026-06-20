@@ -1,15 +1,22 @@
 // DeliveryQr service — P7 F6 "ส่งมอบงานผ่าน QR": paste a Drive/OneDrive link
-// on a job, generate a QR that encodes it directly, and let the photographer
-// retrieve the link again / download the QR image / copy the link for chat.
+// on a job, generate a QR, and let the photographer retrieve the link again /
+// download the QR image / copy the link for chat.
 //
 // DeliveryQr has no teamId of its own (only jobId, like Payment/
 // JobAssignment) — same requireJobInTeam guard. One row per job (jobId is
 // @unique in schema.prisma): setDeliveryQr() upserts, so pasting a new link
 // replaces the existing QR rather than creating a second one.
 //
-// The QR encodes sourceUrl itself, not a link back into our app — see the
-// schema.prisma comment on DeliveryQr for why scanCount isn't incremented
-// here (no redirect endpoint exists yet; that's TASKS.md P8).
+// ── P8 update: QR now encodes our own redirect URL, not sourceUrl directly ──
+// P7 originally encoded sourceUrl itself (zero app involvement). TASKS.md P8
+// added "job: QR scan count", which needs every scan to pass through our own
+// endpoint first — so the QR now encodes `${appUrl}/api/qr/{jobId}`
+// (apps/web/app/api/qr/[jobId]/route.ts), which enqueues a scan-count job
+// and 302s to the real sourceUrl. `appUrl` is passed in by the caller
+// (apps/web), never read from env in here — same convention as
+// packages/auth/src/email/invite-email.ts's `baseURL`. QR images generated
+// before this change still encode the old direct link; they keep working
+// (the link itself didn't change) but won't count scans until regenerated.
 
 import QRCode from "qrcode";
 import { prisma } from "@snapdesk/db";
@@ -75,16 +82,22 @@ export async function getDeliveryQr(context: TeamContext, jobId: string): Promis
 }
 
 /** Generates (or regenerates) the QR for a job's delivery link and upserts
- * it — pasting a new link replaces the old QR/sourceUrl in place. */
+ * it — pasting a new link replaces the old QR/sourceUrl in place.
+ *
+ * `appUrl` builds the redirect URL the QR actually encodes (see file header
+ * note) — pass `env.APP_URL` from apps/web, e.g.
+ * `setDeliveryQrAction` → `setDeliveryQrService(context, input, env.APP_URL)`. */
 export async function setDeliveryQr(
   context: TeamContext,
-  input: SetDeliveryQrInput
+  input: SetDeliveryQrInput,
+  appUrl: string
 ): Promise<DeliveryQr> {
   const parsed = setDeliveryQrInputSchema.parse({ ...input, teamId: context.teamId });
   await requireJobInTeam(context, parsed.jobId);
 
   const provider = detectProvider(parsed.sourceUrl);
-  const qrImageUrl = await QRCode.toDataURL(parsed.sourceUrl, {
+  const redirectUrl = `${appUrl.replace(/\/$/, "")}/api/qr/${parsed.jobId}`;
+  const qrImageUrl = await QRCode.toDataURL(redirectUrl, {
     errorCorrectionLevel: "M",
     margin: 1,
     width: 320,
@@ -107,4 +120,31 @@ export async function deleteDeliveryQr(context: TeamContext, jobId: string): Pro
 
   await prisma.deliveryQr.delete({ where: { jobId } });
   return true;
+}
+
+/**
+ * Unscoped reads/writes below — no TeamContext, by design. Both callers are
+ * outside any user session: the public QR redirect route (a customer
+ * scanning a code, never logged in) and apps/worker's qr-scan processor (a
+ * trusted background process acting on a jobId it was told to process by
+ * that same redirect route, which already resolved it from an unguessable
+ * cuid). Never expose these through a Server Action — they intentionally
+ * skip the requireJobInTeam check every team-facing function above uses.
+ */
+
+export async function getDeliveryQrSourceForRedirect(
+  jobId: string
+): Promise<{ sourceUrl: string } | null> {
+  const row = await prisma.deliveryQr.findUnique({
+    where: { jobId },
+    select: { sourceUrl: true },
+  });
+  return row;
+}
+
+export async function incrementDeliveryQrScanCount(jobId: string): Promise<void> {
+  await prisma.deliveryQr.updateMany({
+    where: { jobId },
+    data: { scanCount: { increment: 1 } },
+  });
 }

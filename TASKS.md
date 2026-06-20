@@ -126,17 +126,17 @@
 - [x] วาง link Google Drive / OneDrive ในหน้างาน
 - [x] generate QR + เก็บค่าใน DB — `packages/core/src/delivery-qr` (ไม่มี `packages/integrations` จริงในโปรเจกต์นี้ ใช้แนวทางเดียวกับ PDF/Excel ของ P4/P6 ที่ฝัง logic ไว้ใน core/apps ตรงๆ แทน)
 - [x] ดึง link กลับมา / ดาวน์โหลด QR / ก็อป link ส่ง chat
-- [ ] (optional) นับจำนวนสแกน — รอ P8 worker (ต้องมี redirect endpoint ของเราเองก่อนถึงนับสแกนได้ เพราะ QR ฝัง sourceUrl ตรงๆ ไม่ผ่านแอพเรา)
+- [x] (optional) นับจำนวนสแกน — ทำใน P8: QR เปลี่ยนไป encode redirect endpoint ของเราเอง (`/api/qr/[jobId]`) แทน sourceUrl ตรงๆ แล้ว enqueue job ให้ worker เพิ่ม `scanCount`
 - [ ] (optional) file picker จาก Drive ถ้าเชื่อม account แล้ว — รอ P9 (ยังไม่มี Google/Microsoft OAuth integration ให้ผูก)
 
 ## P8 — Worker & Queue
 
-- [ ] สร้าง `apps/worker` + `packages/queue` (BullMQ + Redis)
-- [ ] producer ฝั่ง web (`enqueue`) + consumer ฝั่ง worker
-- [ ] retry policy + dead-letter handling
-- [ ] job: reminder ก่อนวันถ่าย
-- [ ] job: QR scan count
-- [ ] job: รับ/ประมวลผล webhook จาก Google/MS
+- [x] สร้าง `apps/worker` + `packages/queue` (BullMQ + Redis)
+- [x] producer ฝั่ง web (`enqueue`, `apps/web/lib/queue.ts`) + consumer ฝั่ง worker (`apps/worker/src/index.ts`)
+- [x] retry policy + dead-letter handling (5 attempts, exponential backoff; failed jobs retained + logged, ดู `packages/queue/src/index.ts`)
+- [x] job: reminder ก่อนวันถ่าย (24 ชม. ก่อน `shootDate`, ส่งอีเมลผ่าน Resend ถ้ามี `customerEmail` + `RESEND_API_KEY`)
+- [x] job: QR scan count
+- [x] job: รับ/ประมวลผล webhook จาก Google/MS — **รับและ enqueue จริง** (รวม MS `validationToken` handshake) แต่ **ฝั่งประมวลผลยัง no-op โดยตั้งใจ**: ยังไม่มี Calendar OAuth/token storage/`calendarEventId` mapping (รอ P9) ให้ sync จริงได้ ดู `apps/worker/src/jobs/calendar-webhook.ts`
 
 ## P9 — Calendar Sync (F4)
 

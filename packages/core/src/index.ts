@@ -32,6 +32,8 @@ export {
   updateJobStatus,
   sendQuotation,
   deleteJob,
+  getJobForReminder,
+  type JobReminderInfo,
 } from "./jobs";
 
 export {
@@ -99,4 +101,6 @@ export {
   setDeliveryQr,
   deleteDeliveryQr,
   detectProvider,
+  getDeliveryQrSourceForRedirect,
+  incrementDeliveryQrScanCount,
 } from "./delivery-qr";

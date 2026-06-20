@@ -216,3 +216,51 @@ export async function deleteJob(context: TeamContext, id: string): Promise<boole
 
   return result.count > 0;
 }
+
+/** Minimal data the shoot-day reminder email needs. */
+export interface JobReminderInfo {
+  id: string;
+  title: string;
+  shootDate: Date;
+  shootTime: string | null;
+  teamName: string;
+  customerName: string;
+  customerEmail: string | null;
+}
+
+/**
+ * Unscoped read — no TeamContext, by design. apps/worker's shoot-reminder
+ * processor is a trusted background process acting on a jobId enqueued by
+ * an already-authorized Server Action (apps/web/app/jobs/actions.ts); it
+ * has no user session to scope by. Returns null if the job (or its
+ * shootDate) no longer exists — the job may have been deleted/rescheduled
+ * between enqueue and run; the processor should just skip silently.
+ *
+ * Never expose this through a Server Action — see the same note on
+ * packages/core/src/delivery-qr's unscoped functions.
+ */
+export async function getJobForReminder(jobId: string): Promise<JobReminderInfo | null> {
+  const row = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: {
+      id: true,
+      title: true,
+      shootDate: true,
+      shootTime: true,
+      team: { select: { name: true } },
+      customer: { select: { name: true, email: true } },
+    },
+  });
+
+  if (!row || !row.shootDate) return null;
+
+  return {
+    id: row.id,
+    title: row.title,
+    shootDate: row.shootDate,
+    shootTime: row.shootTime,
+    teamName: row.team.name,
+    customerName: row.customer.name,
+    customerEmail: row.customer.email,
+  };
+}

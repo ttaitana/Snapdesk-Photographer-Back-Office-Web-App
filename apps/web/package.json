@@ -29,6 +29,7 @@
     "@snapdesk/core": "workspace:*",
     "@snapdesk/types": "workspace:*",
     "@snapdesk/auth": "workspace:*",
+    "@snapdesk/queue": "workspace:*",
     "better-auth": "^1.6.11",
     "@react-pdf/renderer": "^4.4.0",
     "exceljs": "^4.4.0"

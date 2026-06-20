@@ -19,7 +19,9 @@
       "@snapdesk/db": ["../../packages/db/src/index.ts"],
       "@snapdesk/db/*": ["../../packages/db/src/*"],
       "@snapdesk/auth": ["../../packages/auth/src/index.ts"],
-      "@snapdesk/auth/*": ["../../packages/auth/src/*"]
+      "@snapdesk/auth/*": ["../../packages/auth/src/*"],
+      "@snapdesk/queue": ["../../packages/queue/src/index.ts"],
+      "@snapdesk/queue/*": ["../../packages/queue/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
